@@ -21,4 +21,10 @@
     <string name="account_warning">Please setup Evernote account</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="message_setup_api">Setting up Evernote API...</string>
+    <string name="message_clipped">Clipped.</string>
+    <string name="message_error_auth">Error: Failed to authenticate.</string>
+    <string name="message_error_unknown">Error: Something is wrong, maybe a Bug</string>
+    <string name="message_error_api">Error: Failed to setup API, maybe a Bug</string>
+    <string name="message_error_version">Error: Protocol version mismatching</string>
 </resources>

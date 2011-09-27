@@ -21,5 +21,10 @@
     <string name="account_warning">Evernote のアカウントを設定してください</string>
     <string name="yes">はい</string>
     <string name="no">やめる</string>
-    
+    <string name="message_setup_api">Evernote APIの準備中...</string>
+    <string name="message_clipped">クリップしました</string>
+    <string name="message_error_auth">エラー: 認証に失敗しました</string>
+    <string name="message_error_unknown">エラー: なにかがおかしいです, たぶんバグです</string>
+    <string name="message_error_api">エラー: Evernote APIの準備に失敗, たぶんバグです</string>
+    <string name="message_error_version">エラー: プロトコルバージョンが一致しません</string>
 </resources>

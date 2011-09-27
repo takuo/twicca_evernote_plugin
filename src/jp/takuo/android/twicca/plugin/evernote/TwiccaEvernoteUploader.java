@@ -49,6 +49,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -89,6 +90,7 @@ public class TwiccaEvernoteUploader extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
         mContext = getApplicationContext();
         Intent intent = getIntent();
         mBodyText = intent.getStringExtra(Intent.EXTRA_TEXT);
@@ -100,7 +102,7 @@ public class TwiccaEvernoteUploader extends Activity {
         mSource = intent.getStringExtra("source");
         mPrefs = PreferenceManager.getDefaultSharedPreferences(mContext);
         mEvernoteUsername = mPrefs.getString("pref_evernote_username", "");
-        mEvernotePassword= mPrefs.getString("pref_evernote_password", "");
+        mEvernotePassword = mPrefs.getString("pref_evernote_password", "");
         mEvernoteNotebook = mPrefs.getString("pref_evernote_notebook", "");
         mEvernoteTags = mPrefs.getString("pref_evernote_tags", "");
 
@@ -168,7 +170,8 @@ public class TwiccaEvernoteUploader extends Activity {
     public class AsyncRequest extends AsyncTask<Void, String, Void> {
         private static final String CONSUMER_KEY = "sample";
         private static final String CONSUMER_SECRET = "abcdef0123456789";
-        private static final String USER_AGENT = "TwiccaEvernotePlugin (Android)/" + 
+
+        private static final String USER_AGENT = "twiccaEvernotePlugin (Android EDAM)/" +
         Constants.EDAM_VERSION_MAJOR + "." + 
         Constants.EDAM_VERSION_MINOR;
 
@@ -232,11 +235,11 @@ public class TwiccaEvernoteUploader extends Activity {
             TBinaryProtocol userStoreProt = new TBinaryProtocol(userStoreTrans);
             setUserStore(new UserStore.Client(userStoreProt, userStoreProt));
             
-            boolean versionOk = mUserStore.checkVersion("TwiccaEvernotePlugin (Android)",
+            boolean versionOk = mUserStore.checkVersion("twiccaEvernotePlugin (EDAM Android)",
                 com.evernote.edam.userstore.Constants.EDAM_VERSION_MAJOR,
                 com.evernote.edam.userstore.Constants.EDAM_VERSION_MINOR);
             if (!versionOk) {
-                mToastMessage = "Protocol version mismatch";
+                mToastMessage = getString(R.string.message_error_version);
                 Log.e(LOG_TAG, mToastMessage);
                 return;
             }
@@ -245,7 +248,7 @@ public class TwiccaEvernoteUploader extends Activity {
             try {
                 authResult = getUserStore().authenticate(mEvernoteUsername, mEvernotePassword, CONSUMER_KEY, CONSUMER_SECRET);
             } catch (EDAMUserException ex) {
-                mToastMessage = "Failed to authenticate";
+                mToastMessage = getString(R.string.message_error_auth);
                 Log.e(LOG_TAG, mToastMessage, ex);
                 return;
             }
@@ -259,7 +262,7 @@ public class TwiccaEvernoteUploader extends Activity {
             TBinaryProtocol noteStoreProt = new TBinaryProtocol(noteStoreTrans);
             setNoteStore(new NoteStore.Client(noteStoreProt, noteStoreProt));
           } catch (Throwable t) {
-              mToastMessage = "Failed to setup API";
+              mToastMessage = getString(R.string.message_error_api);
               Log.e(LOG_TAG, mToastMessage, t);
           }
         }
@@ -290,7 +293,8 @@ public class TwiccaEvernoteUploader extends Activity {
 
         @Override
         protected Void doInBackground(Void... params) {
-            publishProgress(getString(R.string.dialog_message));
+            publishProgress(getString(R.string.dialog_message) + "\n" +
+                    getString(R.string.message_setup_api));
             setupApi();
             try {
                 if (getNoteStore() != null) {
@@ -314,7 +318,9 @@ public class TwiccaEvernoteUploader extends Activity {
                     } else {
                         notebook = getNoteStore().getDefaultNotebook(getAuthToken());
                     }
-                    publishProgress(getString(R.string.dialog_message)+ "\nNotebook: " + notebook.getName()+"\nTags: " + mEvernoteTags);
+                    publishProgress(getString(R.string.dialog_message)+ "\n" +
+                            getString(R.string.notebook)+ " " + notebook.getName() + "\n" +
+                            getString(R.string.tags) + " " + mEvernoteTags);
 
                     note.setTitle("Tweet by " + mUsername +" (@" + mScreenName + ")");
                     note.setTagNames(java.util.Arrays.asList(mEvernoteTags.split(",")));
@@ -340,10 +346,13 @@ public class TwiccaEvernoteUploader extends Activity {
                     note.setContent(content);
                     getNoteStore().createNote(getAuthToken(), note);
 
-                    mToastMessage = "Success.";
+                    mToastMessage = getString(R.string.message_clipped);
                   }
+              } catch (org.apache.thrift.transport.TTransportException tte) {
+                  mToastMessage = tte.getMessage();
+                  Log.e(LOG_TAG, mToastMessage, tte);
               } catch (Exception e) {
-                  mToastMessage = "Error clipping note";
+                  mToastMessage = getString(R.string.message_error_unknown);
                   Log.e(LOG_TAG, mToastMessage, e);
               }
               return null;

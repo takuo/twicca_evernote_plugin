@@ -26,5 +26,4 @@ public class TwiccaPluginSettings extends PreferenceActivity {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.settings);
     }
-    
 }
