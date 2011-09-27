@@ -10,7 +10,7 @@
     <string name="tags">Tags:</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
-    <string name="app_name">Twicca Evernote Plugin</string>
+    <string name="app_name">twicca Evernote plugin</string>
     <string name="pref_evernote_settings_title">Evernote settings</string>
     <string name="pref_evernote_username">Username</string>
     <string name="pref_evernote_password">Password</string>
