@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="activity_name">Clip to Evernote</string>
+    <string name="settings_name">Evernote Plugin</string>
+    <string name="dialog_title">Clipping</string>
+    <string name="dialog_message">Clipping to Evernote...</string>
+    <string name="dialog_label">Select Notebook and Tags.</string>
+    <string name="confirm_clip">Confirm clipping</string>
+    <string name="notebook">Notebook:</string>
+    <string name="tags">Tags:</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="app_name">Twicca Evernote Plugin</string>
+    <string name="pref_evernote_settings_title">Evernote settings</string>
+    <string name="pref_evernote_username">Username</string>
+    <string name="pref_evernote_password">Password</string>
+    <string name="pref_evernote_notebook">Notebook</string>
+    <string name="pref_evernote_tags">Tags</string>
+    <string name="pref_confirm_dialog">Show confirm dialog</string>
+    <string name="pref_misc_title">Misc settings</string>
+    <string name="account_warning">Please setup Evernote account</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+</resources>

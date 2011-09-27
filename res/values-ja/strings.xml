@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="activity_name">Evernote にクリップ</string>
+    <string name="settings_name">Evernote プラグイン</string>
+    <string name="dialog_title">クリップ</string>
+    <string name="dialog_message">Evernote にクリップ中...</string>
+    <string name="dialog_label">ノートブックとタグの選択</string>
+    <string name="confirm_clip">クリップの確認</string>
+    <string name="app_name">Twicca Evernote プラグイン</string>
+    <string name="notebook">ノートブック:</string>
+    <string name="tags">タグ:</string>
+    <string name="ok">OK</string>
+    <string name="cancel">キャンセル</string>
+    <string name="pref_evernote_settings_title">Evernote の設定</string>
+    <string name="pref_evernote_username">ユーザ名</string>
+    <string name="pref_evernote_password">パスワード</string>
+    <string name="pref_evernote_notebook">ノートブック</string>
+    <string name="pref_evernote_tags">タグ</string>
+    <string name="pref_confirm_dialog">確認ダイアログを表示する</string>
+    <string name="pref_misc_title">その他の設定</string>
+    <string name="account_warning">Evernote のアカウントを設定してください</string>
+    <string name="yes">はい</string>
+    <string name="no">やめる</string>
+    
+</resources>

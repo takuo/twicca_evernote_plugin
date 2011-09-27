@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="@string/pref_evernote_settings_title"
+                        >
+        <EditTextPreference android:key="pref_evernote_username" android:title="@string/pref_evernote_username"></EditTextPreference>
+        <EditTextPreference android:key="pref_evernote_password" android:password="true" android:title="@string/pref_evernote_password"></EditTextPreference>
+        <EditTextPreference android:key="pref_evernote_notebook" android:title="@string/pref_evernote_notebook"></EditTextPreference>
+        <EditTextPreference android:key="pref_evernote_tags" android:title="@string/pref_evernote_tags"></EditTextPreference>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/pref_misc_title">
+        <CheckBoxPreference android:title="@string/pref_confirm_dialog"
+        android:defaultValue="true" android:key="pref_confirm_dialog"></CheckBoxPreference>
+    </PreferenceCategory>
+    
+</PreferenceScreen>
+
