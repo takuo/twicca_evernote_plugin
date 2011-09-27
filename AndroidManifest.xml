@@ -16,8 +16,6 @@
          android:label="@string/settings_name">
             <intent-filter>
                  <action android:name="jp.r246.twicca.ACTION_PLUGIN_SETTINGS" />
-                 <category android:name="android.intent.category.MAIN" />
-                 <category android:name="android.intent.category.LAUNCHER" />
                  <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>>
