@@ -55,7 +55,7 @@ import android.widget.Toast;
 public class TwiccaEvernoteUploader extends Activity {
     private static final String LOG_TAG = "TwiccaEvernote";
     private static final int REQUEST_CODE = 210;
-    public static final Pattern URL_PATTERN = Pattern.compile(
+    private static final Pattern URL_PATTERN = Pattern.compile(
             "(https?://){1}[\\w\\.\\-/:\\#\\?\\=\\&\\;\\%\\~\\+]+", Pattern.CASE_INSENSITIVE);
 
     private Context mContext;
@@ -324,7 +324,8 @@ public class TwiccaEvernoteUploader extends Activity {
                     mBodyText =  matcher.replaceAll("<a target=\"_blank\" href=\"$0\">$0</a>").replace("\n", "<br />");
                     String content =
                         NOTE_PREFIX +
-                        "<table style='border-radius: 10px; background-color: #eeeeee'><tr><td valign='top' style='padding: 10px'>" +
+                        "<table style='border-radius: 10px; background-color: #eeeeee'>" +
+                        "<tr><td valign='top' style='padding: 10px'>" +
                         "<img src=\"" + mProfileImageUrl + "\"/>" +
                         " </td>" +
                         "<td style='padding: 10px'>" +
