@@ -26,7 +26,7 @@ public class CryptEditTextPreference extends EditTextPreference {
         if (positiveResult) {
             String value = getEditText().getText().toString();
             try {
-                if (value != "") {
+                if (value.length() > 0) {
                     value = SimpleCrypt.encrypt(TwiccaEvernoteUploader.SEED, value);
                 }
             } catch (Exception e) {

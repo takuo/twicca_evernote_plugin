@@ -113,7 +113,7 @@ public class TwiccaEvernoteUploader extends Activity {
         mEvernoteTags = mPrefs.getString("pref_evernote_tags", "");
 
         String crypt = mPrefs.getString("pref_evernote_crypted", "");
-        if (!mEvernotePassword.equals("")) {
+        if (mEvernotePassword.length() > 0) {
             try {
             crypt = SimpleCrypt.encrypt(SEED, mEvernotePassword);
             mPrefs.edit().putString("pref_evernote_crypted", crypt).commit();
@@ -123,14 +123,14 @@ public class TwiccaEvernoteUploader extends Activity {
                 Log.d(LOG_TAG, "Failed to encrypt plain password: " + mEvernotePassword);
             }
         }
-        if (!crypt.equals("")) {
+        if (crypt.length() > 0) {
             try {
                 mEvernotePassword = SimpleCrypt.decrypt(SEED, crypt);
             } catch (Exception e) {
                 Log.d(LOG_TAG, "Failed to decrypt password: " + crypt);
             }
         }
-        if (mEvernoteUsername.equals("") || mEvernotePassword.equals("")) {
+        if (mEvernoteUsername.length() == 0 || mEvernotePassword.length() == 0) {
             AlertDialog.Builder builder = new AlertDialog.Builder(TwiccaEvernoteUploader.this);
             builder.setTitle(R.string.settings_name);
             builder.setMessage(getString(R.string.account_warning));
@@ -325,7 +325,7 @@ public class TwiccaEvernoteUploader extends Activity {
                     Notebook notebook = null;
                     Note note = new Note();
                     Time time = new Time();
-                    if (!mEvernoteNotebook.equals("")) {
+                    if (mEvernoteNotebook.length() > 0) {
                         Log.d(LOG_TAG, "search notebook: '" + mEvernoteNotebook + "'");
                         List<Notebook> notebooks = getNoteStore().listNotebooks(getAuthToken());
                         for(Notebook n : notebooks) {
@@ -346,7 +346,7 @@ public class TwiccaEvernoteUploader extends Activity {
                             getString(R.string.tags) + " " + mEvernoteTags);
 
                     note.setTitle("Tweet by " + mUsername +" (@" + mScreenName + ")");
-                    if (!mEvernoteTags.equals("")) {
+                    if (mEvernoteTags.length() > 0) {
                         note.setTagNames(java.util.Arrays.asList(mEvernoteTags.split(",")));
                     } // if
                     if (notebook != null) {
