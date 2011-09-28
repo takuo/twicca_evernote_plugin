@@ -26,5 +26,6 @@
     <string name="message_error_auth">エラー: 認証に失敗しました</string>
     <string name="message_error_unknown">エラー: なにかがおかしいです, たぶんバグです</string>
     <string name="message_error_api">エラー: Evernote APIの準備に失敗, たぶんバグです</string>
+    <string name="message_error_server">エラー: Evernote サーバへ接続できませんでした</string>
     <string name="message_error_version">エラー: プロトコルバージョンが一致しません</string>
 </resources>
