@@ -4,7 +4,10 @@
     <PreferenceCategory android:title="@string/pref_evernote_settings_title"
                         >
         <EditTextPreference android:key="pref_evernote_username" android:title="@string/pref_evernote_username"></EditTextPreference>
-        <EditTextPreference android:key="pref_evernote_password" android:password="true" android:title="@string/pref_evernote_password"></EditTextPreference>
+        <jp.takuo.android.twicca.plugin.evernote.CryptEditTextPreference
+          android:key="pref_evernote_crypted"
+          android:password="true"
+          android:title="@string/pref_evernote_password" />
         <EditTextPreference android:key="pref_evernote_notebook" android:title="@string/pref_evernote_notebook"></EditTextPreference>
         <EditTextPreference android:key="pref_evernote_tags" android:title="@string/pref_evernote_tags"></EditTextPreference>
     </PreferenceCategory>

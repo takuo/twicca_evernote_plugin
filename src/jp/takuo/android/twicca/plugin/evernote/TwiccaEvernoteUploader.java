@@ -43,6 +43,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
@@ -54,6 +55,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 public class TwiccaEvernoteUploader extends Activity {
+    public static final String SEED = "encrypt";
     private static final String LOG_TAG = "TwiccaEvernote";
     private static final int REQUEST_CODE = 210;
     private static final Pattern URL_PATTERN = Pattern.compile(
@@ -84,12 +86,12 @@ public class TwiccaEvernoteUploader extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_CODE) onStart();
+        if (requestCode == REQUEST_CODE) run();
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         mContext = getApplicationContext();
         Intent intent = getIntent();
@@ -100,12 +102,34 @@ public class TwiccaEvernoteUploader extends Activity {
         mProfileImageUrl = intent.getStringExtra("user_profile_image_url_normal");
         mCreatedAt = intent.getStringExtra("created_at");
         mSource = intent.getStringExtra("source");
+        run();
+    }
+
+    private void run () {
         mPrefs = PreferenceManager.getDefaultSharedPreferences(mContext);
         mEvernoteUsername = mPrefs.getString("pref_evernote_username", "");
         mEvernotePassword = mPrefs.getString("pref_evernote_password", "");
         mEvernoteNotebook = mPrefs.getString("pref_evernote_notebook", "");
         mEvernoteTags = mPrefs.getString("pref_evernote_tags", "");
 
+        String crypt = mPrefs.getString("pref_evernote_crypted", "");
+        if (!mEvernotePassword.equals("")) {
+            try {
+            crypt = SimpleCrypt.encrypt(SEED, mEvernotePassword);
+            mPrefs.edit().putString("pref_evernote_crypted", crypt).commit();
+            mPrefs.edit().remove("pref_evernote_password").commit();
+            Log.d(LOG_TAG, "plain text password has been migrate to crypted");
+            } catch (Exception e) {
+                Log.d(LOG_TAG, "Failed to encrypt plain password: " + mEvernotePassword);
+            }
+        }
+        if (!crypt.equals("")) {
+            try {
+                mEvernotePassword = SimpleCrypt.decrypt(SEED, crypt);
+            } catch (Exception e) {
+                Log.d(LOG_TAG, "Failed to decrypt password: " + crypt);
+            }
+        }
         if (mEvernoteUsername.equals("") || mEvernotePassword.equals("")) {
             AlertDialog.Builder builder = new AlertDialog.Builder(TwiccaEvernoteUploader.this);
             builder.setTitle(R.string.settings_name);
@@ -301,30 +325,33 @@ public class TwiccaEvernoteUploader extends Activity {
                     Notebook notebook = null;
                     Note note = new Note();
                     Time time = new Time();
-                    if (mEvernoteNotebook != "") {
+                    if (!mEvernoteNotebook.equals("")) {
+                        Log.d(LOG_TAG, "search notebook: '" + mEvernoteNotebook + "'");
                         List<Notebook> notebooks = getNoteStore().listNotebooks(getAuthToken());
                         for(Notebook n : notebooks) {
                               if (mEvernoteNotebook.equalsIgnoreCase(n.getName())) {
                                   notebook = n;
                                   break;
                               }
-                        }
+                        } // for
                         if (notebook == null) {
                             notebook = new Notebook();
                             notebook.setName(mEvernoteNotebook);
                             getNoteStore().createNotebook(getAuthToken(), notebook);
                             notebook = getNoteStore().getNotebook(getAuthToken(), notebook.getName());
-                        }
-                    } else {
-                        notebook = getNoteStore().getDefaultNotebook(getAuthToken());
-                    }
+                        } // notebook == null
+                    } // mEvernoteNotebook != ""
                     publishProgress(getString(R.string.dialog_message)+ "\n" +
-                            getString(R.string.notebook)+ " " + notebook.getName() + "\n" +
+                            getString(R.string.notebook)+ " " + (notebook != null ? notebook.getName() : "(default)") + "\n" +
                             getString(R.string.tags) + " " + mEvernoteTags);
 
                     note.setTitle("Tweet by " + mUsername +" (@" + mScreenName + ")");
-                    note.setTagNames(java.util.Arrays.asList(mEvernoteTags.split(",")));
-                    note.setNotebookGuid(notebook.getGuid());
+                    if (!mEvernoteTags.equals("")) {
+                        note.setTagNames(java.util.Arrays.asList(mEvernoteTags.split(",")));
+                    } // if
+                    if (notebook != null) {
+                        note.setNotebookGuid(notebook.getGuid());
+                    } // if
                     time.set(Long.parseLong(mCreatedAt));
                     Matcher matcher = URL_PATTERN.matcher(mBodyText);
                     mBodyText =  matcher.replaceAll("<a target=\"_blank\" href=\"$0\">$0</a>").replace("\n", "<br />");
@@ -354,8 +381,8 @@ public class TwiccaEvernoteUploader extends Activity {
               } catch (Exception e) {
                   mToastMessage = getString(R.string.message_error_unknown);
                   Log.e(LOG_TAG, mToastMessage, e);
-              }
+              } // try
               return null;
-          }
-    }
+          } // do
+    } // class
 }
