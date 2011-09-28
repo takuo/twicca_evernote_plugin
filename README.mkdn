@@ -2,3 +2,5 @@ Using source
 ============
 You should modify CONSUMER_KEY and CONSUMER_SECRET to use as your own evernote client.
 
+So, this source tree does not contain SimpleCrypt class due to security issue. You have to implement the class yourself.
+
