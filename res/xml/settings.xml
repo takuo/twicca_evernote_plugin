@@ -3,17 +3,23 @@
   xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory android:title="@string/pref_evernote_settings_title"
                         >
-        <EditTextPreference android:key="pref_evernote_username" android:title="@string/pref_evernote_username"></EditTextPreference>
-        <jp.takuo.android.twicca.plugin.evernote.CryptEditTextPreference
-          android:key="pref_evernote_crypted"
+        <EditTextPreference android:key="pref_evernote_username"
+          android:title="@string/pref_evernote_username" />
+        <EditTextPreference android:key="pref_evernote_password"
+          android:persistent="false"
           android:password="true"
           android:title="@string/pref_evernote_password" />
-        <EditTextPreference android:key="pref_evernote_notebook" android:title="@string/pref_evernote_notebook"></EditTextPreference>
-        <EditTextPreference android:key="pref_evernote_tags" android:title="@string/pref_evernote_tags"></EditTextPreference>
+        <!-- <Preference android:key="try_authenticate"
+          android:persistent="false"
+          android:title="@string/pref_evernote_auth"
+          android:summary="@string/pref_evernote_auth_summary" /> -->
+        <EditTextPreference android:key="pref_evernote_notebook"
+          android:title="@string/pref_evernote_notebook" />
+        <EditTextPreference android:key="pref_evernote_tags" android:title="@string/pref_evernote_tags" />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_misc_title">
         <CheckBoxPreference android:title="@string/pref_confirm_dialog"
-        android:defaultValue="true" android:key="pref_confirm_dialog"></CheckBoxPreference>
+        android:defaultValue="true" android:key="pref_confirm_dialog" />
     </PreferenceCategory>
     
 </PreferenceScreen>

@@ -18,6 +18,7 @@ package jp.takuo.android.twicca.plugin.evernote;
 
 /* from EDAM sample */
 import java.util.List;
+import java.lang.System;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -62,8 +63,19 @@ public class TwiccaEvernoteUploader extends Activity {
     private static final Pattern URL_PATTERN = Pattern.compile(
             "(https?://){1}[\\w\\.\\-/:\\#\\?\\=\\&\\;\\%\\~\\+]+", Pattern.CASE_INSENSITIVE);
 
+    // Preferences keys
+    public static final String PREF_EVERNOTE_USERNAME = "pref_evernote_username";
+    public static final String PREF_EVERNOTE_PASSWORD = "pref_evernote_password";
+    public static final String PREF_EVERNOTE_NOTEBOOK = "pref_evernote_notebook";
+    public static final String PREF_EVERNOTE_TAGS     = "pref_evernote_tags";
+    public static final String PREF_EVERNOTE_CRYPTED  = "pref_evernote_crypted";
+    public static final String PREF_CONFIRM_DIALOG    = "pref_confirm_dialog";
+    public static final String PREF_EVERNOTE_EXPIRE_AUTH = "pref_evernote_expire_auth";
+    public static final String PREF_EVERNOTE_SHARD_ID = "pref_evernote_shard_id";
+    public static final String PREF_EVERNOTE_AUTH_TOKEN = "pref_evernote_auth_token";
+
     private Context mContext;
-    
+
     // data from Twicca
     private String mScreenName;
     private String mUsername;
@@ -108,17 +120,17 @@ public class TwiccaEvernoteUploader extends Activity {
 
     private void run () {
         mPrefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-        mEvernoteUsername = mPrefs.getString("pref_evernote_username", "");
-        mEvernotePassword = mPrefs.getString("pref_evernote_password", "");
-        mEvernoteNotebook = mPrefs.getString("pref_evernote_notebook", "");
-        mEvernoteTags = mPrefs.getString("pref_evernote_tags", "");
+        mEvernoteUsername = mPrefs.getString(PREF_EVERNOTE_USERNAME, "");
+        mEvernotePassword = mPrefs.getString(PREF_EVERNOTE_PASSWORD, "");
+        mEvernoteNotebook = mPrefs.getString(PREF_EVERNOTE_NOTEBOOK, "");
+        mEvernoteTags = mPrefs.getString(PREF_EVERNOTE_TAGS, "");
 
-        String crypt = mPrefs.getString("pref_evernote_crypted", "");
+        String crypt = mPrefs.getString(PREF_EVERNOTE_CRYPTED, "");
         if (mEvernotePassword.length() > 0) {
             try {
             crypt = SimpleCrypt.encrypt(SEED, mEvernotePassword);
-            mPrefs.edit().putString("pref_evernote_crypted", crypt).commit();
-            mPrefs.edit().remove("pref_evernote_password").commit();
+            mPrefs.edit().putString(PREF_EVERNOTE_CRYPTED, crypt).commit();
+            mPrefs.edit().remove(PREF_EVERNOTE_PASSWORD).commit();
             Log.d(LOG_TAG, "plain text password has been migrate to crypted");
             } catch (Exception e) {
                 Log.d(LOG_TAG, "Failed to encrypt plain password: " + mEvernotePassword);
@@ -155,7 +167,7 @@ public class TwiccaEvernoteUploader extends Activity {
             return;
         }
 
-        if (mPrefs.getBoolean("pref_confirm_dialog", true)) {
+        if (mPrefs.getBoolean(PREF_CONFIRM_DIALOG, true)) {
             LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(LAYOUT_INFLATER_SERVICE);
             View layout = inflater.inflate(R.layout.alert_dialog,
                                            (ViewGroup) findViewById(R.id.layout_root));
@@ -254,37 +266,59 @@ public class TwiccaEvernoteUploader extends Activity {
          * authenticating the user.
          */
         private void setupApi() {
+            long nowTime = System.currentTimeMillis();
+            long expire = mPrefs.getLong(PREF_EVERNOTE_EXPIRE_AUTH, 0);
+            // reuse authentication token and shardId.
+            String shardid = mPrefs.getString(PREF_EVERNOTE_SHARD_ID, "");
+            setAuthToken(mPrefs.getString(PREF_EVERNOTE_AUTH_TOKEN, ""));
+
             try {
-                Log.d(LOG_TAG, "Check protocol version...");
+                AuthenticationResult authResult;
                 TAndroidHttpClient userStoreTrans =
                     new TAndroidHttpClient(USERSTORE_URL, USER_AGENT, getFilesDir());
                 TBinaryProtocol userStoreProt = new TBinaryProtocol(userStoreTrans);
                 setUserStore(new UserStore.Client(userStoreProt, userStoreProt));
 
-                boolean versionOk = mUserStore.checkVersion("twiccaEvernotePlugin (EDAM Android)",
-                        com.evernote.edam.userstore.Constants.EDAM_VERSION_MAJOR,
-                        com.evernote.edam.userstore.Constants.EDAM_VERSION_MINOR);
-                if (!versionOk) {
-                    mToastMessage = getString(R.string.message_error_version);
-                    Log.e(LOG_TAG, mToastMessage);
-                    return;
-                } // if versionOK
+                Log.d(LOG_TAG, "Check Authentication expire... (< 1800.000sec): " + (expire - nowTime) / 1000);
+                if (expire - nowTime < 30 * 60 * 1000) { // 30mins before to expire, should re-auth, (msec)
+                    Log.d(LOG_TAG, "ReAuthentication is required");
+                    Log.d(LOG_TAG, "Check protocol version...");
 
-                Log.d(LOG_TAG, "Authenticate user...");
-                AuthenticationResult authResult = null;
-                try {
-                    authResult = getUserStore().authenticate(mEvernoteUsername, mEvernotePassword, CONSUMER_KEY, CONSUMER_SECRET);
-                } catch (EDAMUserException ex) {
-                    mToastMessage = getString(R.string.message_error_auth);
-                    Log.e(LOG_TAG, mToastMessage, ex);
-                    return;
-                } // try
-                User user = authResult.getUser();
-                setAuthToken(authResult.getAuthenticationToken());
+                    boolean versionOk = mUserStore.checkVersion("twiccaEvernotePlugin (EDAM Android)",
+                            com.evernote.edam.userstore.Constants.EDAM_VERSION_MAJOR,
+                            com.evernote.edam.userstore.Constants.EDAM_VERSION_MINOR);
+                    if (!versionOk) {
+                        mToastMessage = getString(R.string.message_error_version);
+                        Log.e(LOG_TAG, mToastMessage);
+                        return;
+                    } // if versionOK
 
+                    Log.d(LOG_TAG, "Authenticate user...");
+                    try {
+                        authResult = getUserStore().authenticate(mEvernoteUsername, mEvernotePassword, CONSUMER_KEY, CONSUMER_SECRET);
+                    } catch (EDAMUserException ex) {
+                        mToastMessage = getString(R.string.message_error_auth);
+                        Log.e(LOG_TAG, mToastMessage, ex);
+                        return;
+                    } // try
+                    User user = authResult.getUser();
+                    setAuthToken(authResult.getAuthenticationToken());
+                    shardid = user.getShardId();
+                } else {
+                    // less than 23 hours, refreshAuth
+                    Log.d(LOG_TAG, "Refreshing authentication...");
+                    authResult = getUserStore().refreshAuthentication(getAuthToken());
+                    Log.d(LOG_TAG, "Auth expired at" + authResult.getExpiration());
+                    setAuthToken(authResult.getAuthenticationToken());
+                }
+                SharedPreferences.Editor editor = mPrefs.edit();
+                editor.putLong(PREF_EVERNOTE_EXPIRE_AUTH, authResult.getExpiration());
+                editor.putString(PREF_EVERNOTE_AUTH_TOKEN, getAuthToken());
+                editor.putString(PREF_EVERNOTE_SHARD_ID, shardid);
+                editor.commit();
                 // After successful authentication, configure a connection to the NoteStore
                 Log.d(LOG_TAG, "Getting the NoteStore...");
-                String noteStoreUrl = NOTESTORE_URL_BASE + user.getShardId();
+                String noteStoreUrl = NOTESTORE_URL_BASE + shardid; // user.getShardId();
                 TAndroidHttpClient noteStoreTrans =
                     new TAndroidHttpClient(noteStoreUrl, USER_AGENT, getFilesDir());
                 TBinaryProtocol noteStoreProt = new TBinaryProtocol(noteStoreTrans);

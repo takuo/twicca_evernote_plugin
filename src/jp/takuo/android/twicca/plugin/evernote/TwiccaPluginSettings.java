@@ -16,14 +16,78 @@
 
 package jp.takuo.android.twicca.plugin.evernote;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.EditTextPreference;
+import android.preference.Preference;
+import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceManager;
+import android.util.Log;
 
-public class TwiccaPluginSettings extends PreferenceActivity {
+public class TwiccaPluginSettings extends PreferenceActivity implements OnPreferenceChangeListener {
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        EditTextPreference editPref;
+        String crypted;
+        String decrypt = "";
+        String summary = "";
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         addPreferencesFromResource(R.xml.settings);
+        editPref = (EditTextPreference)findPreference(TwiccaEvernoteUploader.PREF_EVERNOTE_PASSWORD);
+        crypted = prefs.getString(TwiccaEvernoteUploader.PREF_EVERNOTE_CRYPTED, "");
+        if (crypted.length() > 0) {
+            try {
+                decrypt = SimpleCrypt.decrypt(TwiccaEvernoteUploader.SEED, crypted);
+            } catch (Exception e){
+                // do nothing
+            }
+        }
+        for (int i = 0 ; i < decrypt.length(); i++) {
+            summary = summary.concat("*");
+        }
+        editPref.setSummary(summary);
+        editPref.setText(decrypt);
+        editPref.setDefaultValue(decrypt);
+        editPref.setOnPreferenceChangeListener(this);
+        editPref = (EditTextPreference)findPreference(TwiccaEvernoteUploader.PREF_EVERNOTE_USERNAME);
+        editPref.setSummary(editPref.getText());
+        editPref.setOnPreferenceChangeListener(this);
+        editPref = (EditTextPreference)findPreference(TwiccaEvernoteUploader.PREF_EVERNOTE_NOTEBOOK);
+        editPref.setSummary(editPref.getText());
+        editPref.setOnPreferenceChangeListener(this);
+        editPref = (EditTextPreference)findPreference(TwiccaEvernoteUploader.PREF_EVERNOTE_TAGS);
+        editPref.setSummary(editPref.getText());
+        editPref.setOnPreferenceChangeListener(this);
+    }
+
+    @Override
+    public boolean onPreferenceChange(Preference pref, Object newValue) {
+        String key = pref.getKey();
+        String value = (String)newValue;
+        String summary = value;
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor e = prefs.edit();
+        if (key.equals(TwiccaEvernoteUploader.PREF_EVERNOTE_USERNAME)) {
+            Log.d("TwiccaEvernoteSettings", "reset auth expiration");
+            e.remove(TwiccaEvernoteUploader.PREF_EVERNOTE_EXPIRE_AUTH);
+            e.commit();
+        } else if (key.equals(TwiccaEvernoteUploader.PREF_EVERNOTE_PASSWORD)) {
+            String encrypted = "";
+            try {
+                encrypted = SimpleCrypt.encrypt(TwiccaEvernoteUploader.SEED, value);
+            } catch (Exception exp) {
+                // do nothing
+            }
+            e.putString(TwiccaEvernoteUploader.PREF_EVERNOTE_CRYPTED, encrypted);
+            e.commit();
+            for (int i = 0 ; i < value.length(); i++) {
+                summary = summary.concat("*");
+            }
+        }
+        pref.setSummary(summary);
+        return true;
     }
 }
