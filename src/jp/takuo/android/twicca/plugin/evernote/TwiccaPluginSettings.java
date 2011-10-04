@@ -83,6 +83,7 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
             }
             e.putString(TwiccaEvernoteUploader.PREF_EVERNOTE_CRYPTED, encrypted);
             e.commit();
+            summary = "";
             for (int i = 0 ; i < value.length(); i++) {
                 summary = summary.concat("*");
             }
