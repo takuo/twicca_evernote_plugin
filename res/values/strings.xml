@@ -30,4 +30,5 @@
     <string name="message_error_version">Error: Protocol version mismatching</string>
     <string name="pref_evernote_auth">Try to authentication</string>
     <string name="pref_evernote_auth_summary">Try to authentication with setting values</string>
+    <string name="message_do_background">Clipping in background</string>
 </resources>
