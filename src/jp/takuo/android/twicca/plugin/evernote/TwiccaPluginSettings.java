@@ -23,7 +23,6 @@ import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
-import android.util.Log;
 
 public class TwiccaPluginSettings extends PreferenceActivity implements OnPreferenceChangeListener {
     /** Called when the activity is first created. */
@@ -70,11 +69,7 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
         String summary = value;
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor e = prefs.edit();
-        if (key.equals(TwiccaEvernoteUploader.PREF_EVERNOTE_USERNAME)) {
-            Log.d("TwiccaEvernoteSettings", "reset auth expiration");
-            e.remove(TwiccaEvernoteUploader.PREF_EVERNOTE_EXPIRE_AUTH);
-            e.commit();
-        } else if (key.equals(TwiccaEvernoteUploader.PREF_EVERNOTE_PASSWORD)) {
+        if (key.equals(TwiccaEvernoteUploader.PREF_EVERNOTE_PASSWORD)) {
             String encrypted = "";
             try {
                 encrypted = SimpleCrypt.encrypt(TwiccaEvernoteUploader.SEED, value);
