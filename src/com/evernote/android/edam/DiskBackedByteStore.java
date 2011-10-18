@@ -15,8 +15,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Formatter;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import android.util.Log;
 
 /**
  * Implements an OutputStream that stores data to a temporary file on disk.
@@ -27,8 +26,6 @@ import org.slf4j.LoggerFactory;
  */
 public class DiskBackedByteStore extends OutputStream {
 
-  private static final Logger LOGGER =
-      LoggerFactory.getLogger(DiskBackedByteStore.class);
   protected File file;
   protected int maxMemory;
   protected FileOutputStream fileoutputStream = null;
@@ -72,7 +69,7 @@ public class DiskBackedByteStore extends OutputStream {
       current.write(buffer, offset, count);
     } catch (Exception e) {
       exception = e;
-      LOGGER.warn("Failed to write request:", e);
+      Log.w("Failed to write request:", e);
     }
   }
 
@@ -90,7 +87,7 @@ public class DiskBackedByteStore extends OutputStream {
       size++;
       current.write(oneByte);
     } catch (Exception e) {
-      LOGGER.warn("Failed to write request:", e);
+      Log.w("Failed to write request:", e);
       exception = e;
     }
   }
@@ -103,8 +100,8 @@ public class DiskBackedByteStore extends OutputStream {
 
   protected void swapToDisk() throws FileNotFoundException, IOException {
     // Swap in disk
-    LOGGER.info(new Formatter().format("Swapping to disk. Size: %d", size)
-        .toString());
+    //Log.i(new Formatter().format("Swapping to disk. Size: %d", size)
+    //    .toString());
     fileoutputStream = new FileOutputStream(file);
     byteArray.writeTo(fileoutputStream);
     byteArray = null;

@@ -49,8 +49,6 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HttpContext;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * HTTP implementation of the TTransport interface modified by Evernote to
@@ -58,9 +56,6 @@ import org.slf4j.LoggerFactory;
  * cached on disk before being sent to the Thrift server.
  */
 public class TAndroidHttpClient extends TTransport {
-  private static final Logger LOGGER =
-      LoggerFactory.getLogger(TAndroidHttpClient.class);
-  
   /**
    * Keep requests in RAM if they are less than 512kb.
    */
@@ -90,9 +85,9 @@ public class TAndroidHttpClient extends TTransport {
     
     getHTTPClient();
 
-    LOGGER.info((Thread.currentThread().getId())
-        + "Constructing Thrift client with user agent:" + userAgent
-        + " to URL: " + url);
+    // LOGGER.info((Thread.currentThread().getId())
+    //    + "Constructing Thrift client with user agent:" + userAgent
+    //    + " to URL: " + url);
     this.userAgent = userAgent;
     try {
       url_ = new URL(url);
@@ -126,7 +121,7 @@ public class TAndroidHttpClient extends TTransport {
   }
 
   public void close() {
-    LOGGER.info((Thread.currentThread().getId()) + ": Closing thrift request");
+    // LOGGER.info((Thread.currentThread().getId()) + ": Closing thrift request");
     if (null != inputStream_) {
       try {
         inputStream_.close();
@@ -222,7 +217,7 @@ public class TAndroidHttpClient extends TTransport {
   public void flush() throws TTransportException {
     long timer = System.currentTimeMillis();
    
-    LOGGER.info((Thread.currentThread().getId()) + ": Creating thrift request");
+    // LOGGER.info((Thread.currentThread().getId()) + ": Creating thrift request");
     HttpEntity httpEntity = null;
     
     // Extract request and reset buffer
@@ -270,14 +265,14 @@ public class TAndroidHttpClient extends TTransport {
         requestBuffer_.reset();
       } catch (IOException e) {
       }
-      LOGGER.info((Thread.currentThread().getId()) + ": Response received in: "
-          + (System.currentTimeMillis() - timer) +"ms");
+      // LOGGER.info((Thread.currentThread().getId()) + ": Response received in: "
+      //    + (System.currentTimeMillis() - timer) +"ms");
       this.request = null;
     }
   }
 
   public void cancel() {
-    LOGGER.info("HTTP cancel()");
+    // LOGGER.info("HTTP cancel()");
     try {
       if (this.request != null) {
         this.request.abort();

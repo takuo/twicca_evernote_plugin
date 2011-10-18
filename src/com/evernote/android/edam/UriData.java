@@ -15,8 +15,6 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.protocol.TStruct;
 import org.apache.thrift.protocol.TType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import android.content.Context;
 import android.net.Uri;
@@ -29,8 +27,6 @@ import com.evernote.edam.type.Data;
  * the actual binary data to be sent from an Android file or content Uri.
  */
 public class UriData extends Data {
-  private static final Logger LOGGER =
-    LoggerFactory.getLogger(UriData.class);
 
   private static final TStruct STRUCT_DESC = new TStruct("Data");
   private static final TField BODY_HASH_FIELD_DESC =
@@ -66,7 +62,7 @@ public class UriData extends Data {
       setSize((int) pfd.getStatSize());
       pfd.close();
     } catch (IOException e) {
-      LOGGER.error(e.toString(), e);
+      // LOGGER.error(e.toString(), e);
     }
     setBodyHash(bodyHash);
   }
@@ -136,10 +132,10 @@ public class UriData extends Data {
       }
       in.close();
     } catch (FileDataException e) {
-      LOGGER.info("File: "+ mUri + " failed to transmit.");
+      // LOGGER.info("File: "+ mUri + " failed to transmit.");
       throw e;
     } catch (Exception e) {
-      LOGGER.info("File: "+ mUri + " failed to transmit.");
+      // LOGGER.info("File: "+ mUri + " failed to transmit.");
       throw new FileDataException(e);
     }
     oprot.writeFieldEnd();

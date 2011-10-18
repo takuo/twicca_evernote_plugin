@@ -17,8 +17,6 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.protocol.TStruct;
 import org.apache.thrift.protocol.TType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.evernote.edam.type.Data;
 
@@ -33,7 +31,6 @@ import com.evernote.edam.type.Data;
  * Evernote.
  */
 public class FileData extends Data {
-  private static final Logger LOGGER = LoggerFactory.getLogger(FileData.class);
   private static final TStruct STRUCT_DESC = new TStruct("Data");
   private static final TField BODY_HASH_FIELD_DESC =
       new TField("bodyHash", TType.STRING, (short) 1);
@@ -135,10 +132,10 @@ public class FileData extends Data {
       }
       in.close();
     } catch (FileDataException e) {
-      LOGGER.info("File: " + mBodyFile + " failed to transmit.");
+      // LOGGER.info("File: " + mBodyFile + " failed to transmit.");
       throw e;
     } catch (Exception e) {
-      LOGGER.info("File: " + mBodyFile + " failed to transmit.");
+      // LOGGER.info("File: " + mBodyFile + " failed to transmit.");
       throw new FileDataException(e);
     }
     oprot.writeFieldEnd();
