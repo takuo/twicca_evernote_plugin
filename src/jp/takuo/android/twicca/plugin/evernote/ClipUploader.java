@@ -80,32 +80,29 @@ public class ClipUploader extends IntentService {
         mHandler = new Handler();
     }
 
-    public class ShowToast implements Runnable {
-        String mText;
-
-        public ShowToast (String text) {
-            mText = text;
-        }
-
-        @Override
-        public void run() {
-            Toast.makeText(mContext, mText, Toast.LENGTH_LONG).show();
-        }
-    }
-
     @Override
     protected void onHandleIntent(Intent intent) {
         mContext = getApplicationContext();
-        mNotebookName = intent.getExtras().getString("notebook");
-        mTags = intent.getExtras().getString("tags");
-        mNoteTitle = intent.getExtras().getString("title");
-        mBodyText = intent.getStringExtra(Intent.EXTRA_TEXT);
-        mEvernoteUsername = intent.getExtras().getString("username");
-        mEvernotePassword = intent.getExtras().getString("password");
+        mNotebookName     = intent.getStringExtra("notebook");
+        mTags             = intent.getStringExtra("tags");
+        mNoteTitle        = intent.getStringExtra("title");
+        mBodyText         = intent.getStringExtra(Intent.EXTRA_TEXT);
+        mEvernoteUsername = intent.getStringExtra("username");
+        mEvernotePassword = intent.getStringExtra("password");
         
-        mHandler.post(new ShowToast(getString(R.string.message_do_background)));
+        mHandler.post(new Runnable() {
+            @Override
+            public void run () {
+                Toast.makeText(mContext, getString(R.string.message_do_background), Toast.LENGTH_LONG).show();
+            }
+        });
         doEvernoteApi();
-        mHandler.post(new ShowToast(mToastMessage));
+        mHandler.post(new Runnable() {
+            @Override
+            public void run () {
+                Toast.makeText(mContext, mToastMessage, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void doEvernoteApi() {
