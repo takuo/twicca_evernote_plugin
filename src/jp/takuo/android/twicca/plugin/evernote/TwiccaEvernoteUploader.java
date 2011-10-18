@@ -120,7 +120,7 @@ public class TwiccaEvernoteUploader extends Activity {
             "</td></tr>" +
             "</table>" +
             NOTE_SUFFIX;
-        Intent intent = new Intent(this, ClipUploader.class);
+        Intent intent = new Intent(this, ClippingService.class);
         intent.putExtra("notebook", mEvernoteNotebook);
         intent.putExtra("tags", mEvernoteTags);
         intent.putExtra("title", "Tweet by " + mUsername +" (@" + mScreenName + ")");

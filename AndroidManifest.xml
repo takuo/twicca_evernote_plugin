@@ -21,7 +21,7 @@
             </intent-filter>
         </activity>>
 
-        <service android:name=".ClipUploader"></service>
+        <service android:name=".ClippingService"></service>
 
     </application>
     <uses-sdk android:minSdkVersion="7" />

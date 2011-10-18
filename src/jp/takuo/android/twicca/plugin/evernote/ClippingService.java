@@ -16,6 +16,11 @@
 
 package jp.takuo.android.twicca.plugin.evernote;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.util.List;
 
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -38,7 +43,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
-public class ClipUploader extends IntentService {
+public class ClippingService extends IntentService {
     private Context mContext;
 
     private static final String LOG_TAG = "ClippingService";
@@ -57,6 +62,7 @@ public class ClipUploader extends IntentService {
 
     private String mAuthToken;
     // Client classes used to interact with the Evernote web service
+    private User mUser;
     private UserStore.Client mUserStore;
     private NoteStore.Client mNoteStore;
 
@@ -71,41 +77,65 @@ public class ClipUploader extends IntentService {
     private String mBodyText;
     private Handler mHandler;
 
-    public ClipUploader(String name) {
+    // cache
+    public static final String CACHE_TOKEN  = "token_cached";
+    public static final String CACHE_EXPIRE = "token_expire";
+
+    public ClippingService(String name) {
         super(name);
     }
 
-    public ClipUploader () {
-        super("ClipUploader");
+    public ClippingService () {
+        super("ClippingService");
         mHandler = new Handler();
     }
 
-    @Override
-    protected void onHandleIntent(Intent intent) {
-        mContext = getApplicationContext();
-        mNotebookName     = intent.getStringExtra("notebook");
-        mTags             = intent.getStringExtra("tags");
-        mNoteTitle        = intent.getStringExtra("title");
-        mBodyText         = intent.getStringExtra(Intent.EXTRA_TEXT);
-        mEvernoteUsername = intent.getStringExtra("username");
-        mEvernotePassword = intent.getStringExtra("password");
-        
-        mHandler.post(new Runnable() {
-            @Override
-            public void run () {
-                Toast.makeText(mContext, getString(R.string.message_do_background), Toast.LENGTH_LONG).show();
-            }
-        });
-        doEvernoteApi();
-        mHandler.post(new Runnable() {
-            @Override
-            public void run () {
-                Toast.makeText(mContext, mToastMessage, Toast.LENGTH_LONG).show();
-            }
-        });
+    private boolean readCache() {
+        File file = new File(getCacheDir(), CACHE_EXPIRE);
+        if (! file.canRead()) return false;
+        try {
+            String expire_at;
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            expire_at = br.readLine();
+            br.close();
+
+            // 10 mins padding.
+            if (Long.parseLong(expire_at) < System.currentTimeMillis() - (600 * 1000)) return false;
+
+            file = new File(getCacheDir(), CACHE_TOKEN);
+            if (! file.canRead()) return false;
+            br = new BufferedReader(new FileReader(file));
+            String token = br.readLine();
+            setAuthToken(token);
+            br.close();
+        } catch (Exception e){
+            Log.d(LOG_TAG, "Read error: " + e.getMessage());
+            return false;
+        }
+        return true;
     }
 
-    private void doEvernoteApi() {
+    private boolean writeCache(long expire_at) {
+        try {
+            File file = new File(getCacheDir(), CACHE_TOKEN);
+            file.mkdir();
+
+            BufferedOutputStream fos = new BufferedOutputStream(new FileOutputStream(file));
+            fos.write(getAuthToken().getBytes());
+            fos.close();
+
+            file = new File(getCacheDir(), CACHE_EXPIRE);
+            fos =  new BufferedOutputStream(new FileOutputStream(file));
+            fos.write(Long.toString(expire_at).getBytes());
+            fos.close();
+        } catch (Exception e){
+            Log.e(LOG_TAG, "Write error:" + e.getMessage());
+            return false;
+        }
+        return true;
+    }
+
+    private boolean doAuth() {
         for (int i = 0 ; i < 5 ; i++) {
             try {
                 AuthenticationResult authResult;
@@ -122,7 +152,7 @@ public class ClipUploader extends IntentService {
                 if (!versionOk) {
                     mToastMessage = getString(R.string.message_error_version);
                     Log.e(LOG_TAG, mToastMessage);
-                    return;
+                    return false;
                 } // if versionOK
 
                 Log.d(LOG_TAG, "Authenticate user...");
@@ -132,14 +162,92 @@ public class ClipUploader extends IntentService {
                 } catch (EDAMUserException ex) {
                     mToastMessage = getString(R.string.message_error_auth);
                     Log.e(LOG_TAG, mToastMessage, ex);
-                    return;
+                    return false;
                 } // try
-                User user = authResult.getUser();
+                mUser = authResult.getUser();
                 setAuthToken(authResult.getAuthenticationToken());
+                writeCache(authResult.getExpiration());
+                return true;
+            } catch (Exception e) {
+                mToastMessage = "Error: " + e.getMessage();
+                Log.e(LOG_TAG, mToastMessage);
+            } // try
+        }
+        return false;
+    }
 
-                // After successful authentication, configure a connection to the NoteStore
+    private boolean doRefreshAuth() {
+        for (int i = 0; i < 5; i++) {
+            try {
+                AuthenticationResult authResult;
+                TAndroidHttpClient userStoreTrans =
+                    new TAndroidHttpClient(USERSTORE_URL, USER_AGENT, getFilesDir());
+                TBinaryProtocol userStoreProt = new TBinaryProtocol(userStoreTrans);
+                setUserStore(new UserStore.Client(userStoreProt, userStoreProt));
+
+                Log.d(LOG_TAG, "Refresh authtoken...");
+
+                try {
+                    authResult = getUserStore().refreshAuthentication(getAuthToken());
+                } catch (EDAMUserException ex) {
+                    mToastMessage = getString(R.string.message_error_auth);
+                    Log.e(LOG_TAG, mToastMessage, ex);
+                    return false;
+                } // try
+                setAuthToken(authResult.getAuthenticationToken());
+                writeCache(authResult.getExpiration());
+                return true;
+            } catch (Exception e) {
+                mToastMessage = e.getMessage();
+                Log.e(LOG_TAG, mToastMessage);
+            } // try
+        } // for
+        return false;
+    }
+
+    @Override
+    protected void onHandleIntent(Intent intent) {
+        mContext = getApplicationContext();
+        mNotebookName     = intent.getStringExtra("notebook");
+        mTags             = intent.getStringExtra("tags");
+        mNoteTitle        = intent.getStringExtra("title");
+        mBodyText         = intent.getStringExtra(Intent.EXTRA_TEXT);
+        mEvernoteUsername = intent.getStringExtra("username");
+        mEvernotePassword = intent.getStringExtra("password");
+        boolean authed = false;
+
+        mHandler.post(new Runnable() {
+            @Override
+            public void run () {
+                Toast.makeText(mContext, getString(R.string.message_do_background), Toast.LENGTH_LONG).show();
+            }
+        });
+        authed = readCache();
+        if (!authed) {
+            authed = doAuth();
+        } else {
+            authed = doRefreshAuth();
+            if (!authed) {
+                authed = doAuth();
+            }
+        }
+        if (authed) doEvernoteApi();
+        mHandler.post(new Runnable() {
+            @Override
+            public void run () {
+                Toast.makeText(mContext, mToastMessage, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void doEvernoteApi() {
+        for (int i=0; i<5;i++) {
+            try {
+                if (mUser == null) {
+                    mUser = getUserStore().getUser(getAuthToken());
+                }
                 Log.d(LOG_TAG, "Getting the NoteStore...");
-                String noteStoreUrl = NOTESTORE_URL_BASE + user.getShardId();
+                String noteStoreUrl = NOTESTORE_URL_BASE + mUser.getShardId();
                 TAndroidHttpClient noteStoreTrans =
                     new TAndroidHttpClient(noteStoreUrl, USER_AGENT, getFilesDir());
                 TBinaryProtocol noteStoreProt = new TBinaryProtocol(noteStoreTrans);
