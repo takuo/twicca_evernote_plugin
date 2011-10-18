@@ -78,8 +78,7 @@ public class ClippingService extends IntentService {
     private Handler mHandler;
 
     // cache
-    public static final String CACHE_TOKEN  = "token_cached";
-    public static final String CACHE_EXPIRE = "token_expire";
+    public static final String CACHE_TOKEN  = "token";
 
     public ClippingService(String name) {
         super(name);
@@ -91,23 +90,16 @@ public class ClippingService extends IntentService {
     }
 
     private boolean readCache() {
-        File file = new File(getCacheDir(), CACHE_EXPIRE);
+        File file = new File(getCacheDir(), CACHE_TOKEN);
         if (! file.canRead()) return false;
         try {
-            String expire_at;
             BufferedReader br = new BufferedReader(new FileReader(file));
-            expire_at = br.readLine();
+            String expire_at = br.readLine();
+            String token = br.readLine();
             br.close();
-
             // 10 mins padding.
             if (Long.parseLong(expire_at) < System.currentTimeMillis() - (600 * 1000)) return false;
-
-            file = new File(getCacheDir(), CACHE_TOKEN);
-            if (! file.canRead()) return false;
-            br = new BufferedReader(new FileReader(file));
-            String token = br.readLine();
             setAuthToken(token);
-            br.close();
         } catch (Exception e){
             Log.d(LOG_TAG, "Read error: " + e.getMessage());
             return false;
@@ -118,15 +110,9 @@ public class ClippingService extends IntentService {
     private boolean writeCache(long expire_at) {
         try {
             File file = new File(getCacheDir(), CACHE_TOKEN);
-            file.mkdir();
 
             BufferedOutputStream fos = new BufferedOutputStream(new FileOutputStream(file));
-            fos.write(getAuthToken().getBytes());
-            fos.close();
-
-            file = new File(getCacheDir(), CACHE_EXPIRE);
-            fos =  new BufferedOutputStream(new FileOutputStream(file));
-            fos.write(Long.toString(expire_at).getBytes());
+            fos.write((Long.toString(expire_at) + "\n" + getAuthToken()).getBytes());
             fos.close();
         } catch (Exception e){
             Log.e(LOG_TAG, "Write error:" + e.getMessage());

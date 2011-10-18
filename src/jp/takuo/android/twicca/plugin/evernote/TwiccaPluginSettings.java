@@ -72,7 +72,7 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor e = prefs.edit();
         if (key.equals(TwiccaEvernoteUploader.PREF_EVERNOTE_USERNAME)) {
-            File file = new File(getCacheDir(), ClippingService.CACHE_EXPIRE);
+            File file = new File(getCacheDir(), ClippingService.CACHE_TOKEN);
             if (file.exists()) file.delete();
         } else if (key.equals(TwiccaEvernoteUploader.PREF_EVERNOTE_PASSWORD)) {
             String encrypted = "";
