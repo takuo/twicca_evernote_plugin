@@ -16,6 +16,8 @@
 
 package jp.takuo.android.twicca.plugin.evernote;
 
+import java.io.File;
+
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
@@ -69,7 +71,10 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
         String summary = value;
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor e = prefs.edit();
-        if (key.equals(TwiccaEvernoteUploader.PREF_EVERNOTE_PASSWORD)) {
+        if (key.equals(TwiccaEvernoteUploader.PREF_EVERNOTE_USERNAME)) {
+            File file = new File(getCacheDir(), ClippingService.CACHE_EXPIRE);
+            if (file.exists()) file.delete();
+        } else if (key.equals(TwiccaEvernoteUploader.PREF_EVERNOTE_PASSWORD)) {
             String encrypted = "";
             try {
                 encrypted = SimpleCrypt.encrypt(TwiccaEvernoteUploader.SEED, value);
