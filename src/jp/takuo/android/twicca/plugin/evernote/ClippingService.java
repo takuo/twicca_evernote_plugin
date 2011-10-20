@@ -162,33 +162,21 @@ public class ClippingService extends IntentService {
         return false;
     }
 
-    private boolean doRefreshAuth() {
-        for (int i = 0; i < 5; i++) {
-            try {
-                AuthenticationResult authResult;
-                TAndroidHttpClient userStoreTrans =
-                    new TAndroidHttpClient(USERSTORE_URL, USER_AGENT, getFilesDir());
-                TBinaryProtocol userStoreProt = new TBinaryProtocol(userStoreTrans);
-                setUserStore(new UserStore.Client(userStoreProt, userStoreProt));
-
-                Log.d(LOG_TAG, "Refresh authtoken...");
-
-                try {
-                    authResult = getUserStore().refreshAuthentication(getAuthToken());
-                } catch (EDAMUserException ex) {
-                    mToastMessage = getString(R.string.message_error_auth);
-                    Log.e(LOG_TAG, mToastMessage, ex);
-                    return false;
-                } // try
-                setAuthToken(authResult.getAuthenticationToken());
-                writeCache(authResult.getExpiration());
-                return true;
-            } catch (Exception e) {
-                mToastMessage = e.getMessage();
-                Log.e(LOG_TAG, mToastMessage);
-            } // try
-        } // for
-        return false;
+    private boolean refreshAuth() {
+        AuthenticationResult authResult;
+        if (getUserStore() == null) return false;
+        Log.d(LOG_TAG, "Refresh authtoken...");
+        try {
+            authResult = getUserStore().refreshAuthentication(getAuthToken());
+            setAuthToken(authResult.getAuthenticationToken());
+            writeCache(authResult.getExpiration());
+            return true;
+        } catch (EDAMUserException ex) {
+            Log.e(LOG_TAG, mToastMessage, ex);
+            return false;
+        } catch (Exception e)  {
+            return false;
+        } // try
     }
 
     @Override
@@ -205,30 +193,34 @@ public class ClippingService extends IntentService {
         mHandler.post(new Runnable() {
             @Override
             public void run () {
-                Toast.makeText(mContext, getString(R.string.message_do_background), Toast.LENGTH_LONG).show();
+                Toast.makeText(mContext, getString(R.string.message_do_background), Toast.LENGTH_SHORT).show();
             }
         });
         authed = readCache();
         if (!authed) {
             authed = doAuth();
-        } else {
-            authed = doRefreshAuth();
-            if (!authed) {
-                authed = doAuth();
-            }
         }
-        if (authed) doEvernoteApi();
+        if (!authed) {
+            mToastMessage = getString(R.string.message_error_auth);
+        } else {
+            doEvernoteApi();
+        }
         mHandler.post(new Runnable() {
             @Override
             public void run () {
                 Toast.makeText(mContext, mToastMessage, Toast.LENGTH_LONG).show();
             }
         });
+        refreshAuth();
     }
 
     private void doEvernoteApi() {
         for (int i=0; i<5;i++) {
             try {
+                TAndroidHttpClient userStoreTrans =
+                    new TAndroidHttpClient(USERSTORE_URL, USER_AGENT, getFilesDir());
+                TBinaryProtocol userStoreProt = new TBinaryProtocol(userStoreTrans);
+                setUserStore(new UserStore.Client(userStoreProt, userStoreProt));
                 if (mUser == null) {
                     mUser = getUserStore().getUser(getAuthToken());
                 }
