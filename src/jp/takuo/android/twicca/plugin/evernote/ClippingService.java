@@ -190,12 +190,6 @@ public class ClippingService extends IntentService {
         mEvernotePassword = intent.getStringExtra("password");
         boolean authed = false;
 
-        mHandler.post(new Runnable() {
-            @Override
-            public void run () {
-                Toast.makeText(mContext, getString(R.string.message_do_background), Toast.LENGTH_SHORT).show();
-            }
-        });
         authed = readCache();
         if (!authed) {
             authed = doAuth();
@@ -211,7 +205,7 @@ public class ClippingService extends IntentService {
                 Toast.makeText(mContext, mToastMessage, Toast.LENGTH_LONG).show();
             }
         });
-        refreshAuth();
+        if (authed) refreshAuth();
     }
 
     private void doEvernoteApi() {
