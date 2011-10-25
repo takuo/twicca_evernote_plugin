@@ -36,6 +36,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.EditText;
+import android.widget.Toast;
 
 public class TwiccaEvernoteUploader extends Activity {
     public static final String SEED = "encrypt";
@@ -127,6 +128,7 @@ public class TwiccaEvernoteUploader extends Activity {
         intent.putExtra("username", mEvernoteUsername);
         intent.putExtra("password", mEvernotePassword);
         intent.putExtra(Intent.EXTRA_TEXT, content);
+        Toast.makeText(mContext, getString(R.string.message_do_background), Toast.LENGTH_SHORT).show();
         startService(intent);
     }
 
