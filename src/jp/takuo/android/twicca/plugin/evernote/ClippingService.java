@@ -23,6 +23,7 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TTransportException;
 
 import com.evernote.android.edam.TAndroidHttpClient;
+import com.evernote.edam.error.EDAMNotFoundException;
 import com.evernote.edam.error.EDAMUserException;
 import com.evernote.edam.notestore.NoteStore;
 import com.evernote.edam.type.Note;
@@ -182,7 +183,7 @@ public class ClippingService extends IntentService {
                 Toast.makeText(mContext, mToastMessage, Toast.LENGTH_LONG).show();
             }
         });
-        if (token != null) {
+        if (getAuthToken() != null) {
             refreshAuth();
         }
     }
@@ -215,6 +216,38 @@ public class ClippingService extends IntentService {
         } // for loop (retry)
     } // method
 
+    private Notebook createNotebook(String name) {
+        Log.d(LOG_TAG, "Create new notebook: '" + mNotebookName + "'");
+
+        Notebook notebook = new Notebook();
+        notebook.setName(mNotebookName);
+        for (int i = 0; i < 5 ; i++) { // retry count 5
+            try {
+                try {
+                    notebook = getNoteStore().createNotebook(getAuthToken(), notebook);
+                    mNoteTable.put(mNotebookName.toLowerCase(), notebook.getGuid());
+                } catch (EDAMUserException e) {
+                    // maybe already exists.
+                    notebook = null;
+                }
+                if (notebook == null) {
+                    Log.d(LOG_TAG, "Retrieve notebook list...");
+                    mNotebooks = getNoteStore().listNotebooks(getAuthToken());
+                    for (Notebook n : mNotebooks) {
+                        if (mNotebookName.equalsIgnoreCase(n.getName())) {
+                            notebook = n;
+                            break;
+                        } // if
+                    } // for
+                } // notebook == null
+                return notebook;
+            } catch (Exception e) {
+                Log.e(LOG_TAG, "Error: " + e.getMessage());
+            }
+        }
+        return null;
+    }
+
     private void doUpload() {
         if (getNoteStore() == null) return;
         for (int i = 0; i < 5; i++) {
@@ -223,31 +256,11 @@ public class ClippingService extends IntentService {
                 Notebook notebook = null;
                 Note note = new Note();
                 if (mNotebookName.length() > 0) {
-                    Log.d(LOG_TAG, "Search notebook: '" + mNotebookName + "'");
+                    Log.d(LOG_TAG, "Search notebook from cache: '" + mNotebookName + "'");
                     if (mNoteTable.containsKey(mNotebookName.toLowerCase())) {
                         guid = mNoteTable.get(mNotebookName.toLowerCase());
                     } else {
-                        Log.d(LOG_TAG, "Create new notebook: '" + mNotebookName + "'");
-                        notebook = new Notebook();
-                        notebook.setName(mNotebookName);
-                        try {
-                            notebook = getNoteStore().createNotebook(getAuthToken(), notebook);
-                        } catch (EDAMUserException e) {
-                            // maybe already exists.
-                            mToastMessage = getString(R.string.message_error_server) + "\n" + e.getMessage();
-                            Log.e(LOG_TAG, mToastMessage, e);
-                            notebook = null;
-                        }
-                        if (notebook == null) {
-                            Log.d(LOG_TAG, "Retreive notebook list...");
-                            mNotebooks = getNoteStore().listNotebooks(getAuthToken());
-                            for (Notebook n : mNotebooks) {
-                                if (mNotebookName.equalsIgnoreCase(n.getName())) {
-                                    notebook = n;
-                                    break;
-                                } // if
-                            } // for
-                        } // notebook == null
+                        notebook = createNotebook(mNotebookName);
                         if (notebook != null) guid = notebook.getGuid();
                     } // mNoteTable...
                 } // mEvernoteNotebook != ""
@@ -261,8 +274,17 @@ public class ClippingService extends IntentService {
                     note.setNotebookGuid(guid);
                 } // if
                 note.setContent(mBodyText);
-                getNoteStore().createNote(getAuthToken(), note);
-
+                try {
+                    getNoteStore().createNote(getAuthToken(), note);
+                } catch (EDAMNotFoundException ee) {
+                    notebook = createNotebook(mNotebookName);
+                    if (notebook != null) {
+                        note.setNotebookGuid(notebook.getGuid());
+                    } else {
+                        note.setNotebookGuid(null);
+                    }
+                    getNoteStore().createNote(getAuthToken(), note);
+                }
                 mToastMessage = getString(R.string.message_clipped) + ": " + mNoteTitle;
                 Log.d(LOG_TAG, "done clipping");
                 return;
