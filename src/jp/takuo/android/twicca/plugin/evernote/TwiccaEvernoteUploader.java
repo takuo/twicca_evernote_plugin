@@ -208,7 +208,7 @@ public class TwiccaEvernoteUploader extends Activity {
 
             mSpinner = (Spinner)layout.findViewById(R.id.notebook_list);
             ArrayAdapter<String> items = new ArrayAdapter<String>(this,
-                    android.R.layout.simple_dropdown_item_1line, notebooks);
+                    R.layout.dropdown_list_item, notebooks);
             int i = 0;
             if (mEvernoteNotebook.length() > 0) {
                 ListIterator<String> itr = notebooks.listIterator();
@@ -253,7 +253,8 @@ public class TwiccaEvernoteUploader extends Activity {
 
             mEditTags = (MultiAutoCompleteTextView)layout.
                 findViewById(R.id.edit_tags);
-            ArrayAdapter<String> adapter = new ArrayAdapter<String>(mContext, android.R.layout.simple_list_item_1, tags);
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(mContext,
+                    R.layout.list_item, tags);
             mEditTags.setAdapter(adapter);
             mEditTags.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
             mEditTags.setText(mEvernoteTags);
