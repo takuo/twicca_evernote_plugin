@@ -17,6 +17,8 @@
 package jp.takuo.android.twicca.plugin.evernote;
 
 /* from EDAM sample */
+import java.util.ArrayList;
+import java.util.ListIterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,9 +37,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.MultiAutoCompleteTextView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 public class TwiccaEvernoteUploader extends Activity {
@@ -80,6 +85,7 @@ public class TwiccaEvernoteUploader extends Activity {
 
     // UI
     private EditText mEditNotebook;
+    private Spinner mSpinner;
     private MultiAutoCompleteTextView mEditTags;
 
     // Caching
@@ -188,24 +194,79 @@ public class TwiccaEvernoteUploader extends Activity {
         }
 
         if (mPrefs.getBoolean(PREF_CONFIRM_DIALOG, true)) {
+            ArrayList<String> notebooks = cacheManager.getNotebookNames();
+            final int lastItem = notebooks.size();
             String[] tags = cacheManager.getTagNames();
-            LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(LAYOUT_INFLATER_SERVICE);
+            LayoutInflater inflater = getLayoutInflater();
             View layout = inflater.inflate(R.layout.alert_dialog,
                                            (ViewGroup) findViewById(R.id.layout_root));
-            AlertDialog.Builder builder = new AlertDialog.Builder(TwiccaEvernoteUploader.this);
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle(R.string.confirm_clip);
+
             mEditNotebook = (EditText)layout.findViewById(R.id.edit_notebook);
+            mEditNotebook.setHint(getString(R.string.hint_notebook));
+
+            mSpinner = (Spinner)layout.findViewById(R.id.notebook_list);
+            ArrayAdapter<String> items = new ArrayAdapter<String>(this,
+                    android.R.layout.simple_dropdown_item_1line, notebooks);
+            int i = 0;
+            if (mEvernoteNotebook.length() > 0) {
+                ListIterator<String> itr = notebooks.listIterator();
+                while (itr.hasNext()) {
+                    String name = itr.next();
+                    if (mEvernoteNotebook.equalsIgnoreCase(name))
+                        break;
+                    i++;
+                }
+            }
+            items.add(getString(R.string.new_or_default));
+            mSpinner.setAdapter(items);
+            mSpinner.setSelection(i);
+            if (i == lastItem) {
+                mEditNotebook.setEnabled(true);
+                if (mEvernoteNotebook.length() > 0) {
+                    mEditNotebook.setText(mEvernoteNotebook);
+                }
+            } else {
+                mEditNotebook.setEnabled(false);
+            }
+            mSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> arg0, View arg1,
+                        int arg2, long arg3) {
+                    // TODO Auto-generated method stub
+                    if (arg2 == lastItem) {
+                        mEditNotebook.setEnabled(true);
+                        mEditNotebook.requestFocus();
+                    } else {
+                        mEditNotebook.setEnabled(false);
+                    }
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> arg0) {
+                    // TODO Auto-generated method stub
+                    mEditNotebook.setEnabled(true);
+                    mEditNotebook.requestFocus();
+                }
+            });
+
             mEditTags = (MultiAutoCompleteTextView)layout.
                 findViewById(R.id.edit_tags);
-            ArrayAdapter<String> adapter = new ArrayAdapter<String>(mContext, R.layout.list_item, tags);
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(mContext, android.R.layout.simple_list_item_1, tags);
             mEditTags.setAdapter(adapter);
             mEditTags.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
-            mEditNotebook.setText(mEvernoteNotebook);
             mEditTags.setText(mEvernoteTags);
             builder.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    mEvernoteNotebook = mEditNotebook.getText().toString();
+                    long index = mSpinner.getSelectedItemId();
+                    if (index != (long)lastItem) {
+                        mEvernoteNotebook = (String) mSpinner.getSelectedItem();
+                        Log.d(LOG_TAG, "Selected: " + mEvernoteNotebook);
+                    } else {
+                        mEvernoteNotebook = mEditNotebook.getText().toString();
+                    }
                     mEvernoteTags = mEditTags.getText().toString();
                     dialog.dismiss();
                     requestUpload();
