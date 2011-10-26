@@ -35,7 +35,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.MultiAutoCompleteTextView;
 import android.widget.Toast;
 
 public class TwiccaEvernoteUploader extends Activity {
@@ -78,7 +80,10 @@ public class TwiccaEvernoteUploader extends Activity {
 
     // UI
     private EditText mEditNotebook;
-    private EditText mEditTags;
+    private MultiAutoCompleteTextView mEditTags;
+
+    // Caching
+    private ECacheManager cacheManager;
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -90,6 +95,7 @@ public class TwiccaEvernoteUploader extends Activity {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         mContext = getApplicationContext();
+        cacheManager = new ECacheManager(mContext);
         Intent intent = getIntent();
         mBodyText = intent.getStringExtra(Intent.EXTRA_TEXT);
         mTweetId = intent.getStringExtra("id");
@@ -182,14 +188,18 @@ public class TwiccaEvernoteUploader extends Activity {
         }
 
         if (mPrefs.getBoolean(PREF_CONFIRM_DIALOG, true)) {
+            String[] tags = cacheManager.getTagNames();
             LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(LAYOUT_INFLATER_SERVICE);
             View layout = inflater.inflate(R.layout.alert_dialog,
                                            (ViewGroup) findViewById(R.id.layout_root));
             AlertDialog.Builder builder = new AlertDialog.Builder(TwiccaEvernoteUploader.this);
             builder.setTitle(R.string.confirm_clip);
             mEditNotebook = (EditText)layout.findViewById(R.id.edit_notebook);
-            mEditTags = (EditText)layout.
-            findViewById(R.id.edit_tags);
+            mEditTags = (MultiAutoCompleteTextView)layout.
+                findViewById(R.id.edit_tags);
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(mContext, R.layout.list_item, tags);
+            mEditTags.setAdapter(adapter);
+            mEditTags.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
             mEditNotebook.setText(mEvernoteNotebook);
             mEditTags.setText(mEvernoteTags);
             builder.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
