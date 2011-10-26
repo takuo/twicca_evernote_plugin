@@ -16,11 +16,7 @@
 
 package jp.takuo.android.twicca.plugin.evernote;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
+import java.util.Hashtable;
 import java.util.List;
 
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -31,6 +27,7 @@ import com.evernote.edam.error.EDAMUserException;
 import com.evernote.edam.notestore.NoteStore;
 import com.evernote.edam.type.Note;
 import com.evernote.edam.type.Notebook;
+import com.evernote.edam.type.Tag;
 import com.evernote.edam.type.User;
 import com.evernote.edam.userstore.AuthenticationResult;
 import com.evernote.edam.userstore.Constants;
@@ -60,11 +57,13 @@ public class ClippingService extends IntentService {
     private static final String USERSTORE_URL = "https://" + EVERNOTE_HOST + "/edam/user";
     private static final String NOTESTORE_URL_BASE = "https://" + EVERNOTE_HOST + "/edam/note/";
 
+    private Hashtable<String, String> mNoteTable;
     private String mAuthToken;
     // Client classes used to interact with the Evernote web service
     private User mUser;
     private UserStore.Client mUserStore;
     private NoteStore.Client mNoteStore;
+    private List<Notebook> mNotebooks;
 
     // preference values
     private String mEvernoteUsername;
@@ -76,9 +75,7 @@ public class ClippingService extends IntentService {
     private String mNoteTitle;
     private String mBodyText;
     private Handler mHandler;
-
-    // cache
-    public static final String CACHE_TOKEN  = "token";
+    private ECacheManager cacheManager;
 
     public ClippingService(String name) {
         super(name);
@@ -87,38 +84,6 @@ public class ClippingService extends IntentService {
     public ClippingService () {
         super("ClippingService");
         mHandler = new Handler();
-    }
-
-    private boolean readCache() {
-        File file = new File(getCacheDir(), CACHE_TOKEN);
-        if (! file.canRead()) return false;
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            String expire_at = br.readLine();
-            String token = br.readLine();
-            br.close();
-            // 10 mins padding.
-            if (Long.parseLong(expire_at) < System.currentTimeMillis() - (600 * 1000)) return false;
-            setAuthToken(token);
-        } catch (Exception e){
-            Log.d(LOG_TAG, "Read error: " + e.getMessage());
-            return false;
-        }
-        return true;
-    }
-
-    private boolean writeCache(long expire_at) {
-        try {
-            File file = new File(getCacheDir(), CACHE_TOKEN);
-
-            BufferedOutputStream fos = new BufferedOutputStream(new FileOutputStream(file));
-            fos.write((Long.toString(expire_at) + "\n" + getAuthToken()).getBytes());
-            fos.close();
-        } catch (Exception e){
-            Log.e(LOG_TAG, "Write error:" + e.getMessage());
-            return false;
-        }
-        return true;
     }
 
     private boolean doAuth() {
@@ -152,7 +117,7 @@ public class ClippingService extends IntentService {
                 } // try
                 mUser = authResult.getUser();
                 setAuthToken(authResult.getAuthenticationToken());
-                writeCache(authResult.getExpiration());
+                cacheManager.writeAuthCache(authResult.getAuthenticationToken(), authResult.getExpiration());
                 return true;
             } catch (Exception e) {
                 mToastMessage = "Error: " + e.getMessage();
@@ -169,7 +134,13 @@ public class ClippingService extends IntentService {
         try {
             authResult = getUserStore().refreshAuthentication(getAuthToken());
             setAuthToken(authResult.getAuthenticationToken());
-            writeCache(authResult.getExpiration());
+            cacheManager.writeAuthCache(authResult.getAuthenticationToken(), authResult.getExpiration());
+            List<Tag> tags = getNoteStore().listTags(getAuthToken());
+            cacheManager.writeTagsCache(tags);
+            if (mNotebooks == null) {
+                mNotebooks = getNoteStore().listNotebooks(getAuthToken());
+            }
+            cacheManager.writeNoteCache(mNotebooks);
             return true;
         } catch (EDAMUserException ex) {
             Log.e(LOG_TAG, mToastMessage, ex);
@@ -182,30 +153,38 @@ public class ClippingService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         mContext = getApplicationContext();
+        cacheManager = new ECacheManager(mContext);
+        mNoteTable = cacheManager.getNoteTable();
         mNotebookName     = intent.getStringExtra("notebook");
         mTags             = intent.getStringExtra("tags");
         mNoteTitle        = intent.getStringExtra("title");
         mBodyText         = intent.getStringExtra(Intent.EXTRA_TEXT);
         mEvernoteUsername = intent.getStringExtra("username");
         mEvernotePassword = intent.getStringExtra("password");
-        boolean authed = false;
+        String token = null;
 
-        authed = readCache();
-        if (!authed) {
-            authed = doAuth();
-        }
-        if (!authed) {
-            mToastMessage = getString(R.string.message_error_auth);
+        token = cacheManager.getAuthToken();
+        if (token != null) {
+            setAuthToken(token);
         } else {
+            if (doAuth() == false) {
+                mToastMessage = getString(R.string.message_error_auth);
+            }
+        }
+
+        if (getAuthToken() != null) {
             doEvernoteApi();
         }
+
         mHandler.post(new Runnable() {
             @Override
             public void run () {
                 Toast.makeText(mContext, mToastMessage, Toast.LENGTH_LONG).show();
             }
         });
-        if (authed) refreshAuth();
+        if (token != null) {
+            refreshAuth();
+        }
     }
 
     private void doEvernoteApi() {
@@ -237,44 +216,55 @@ public class ClippingService extends IntentService {
     } // method
 
     private void doUpload() {
+        if (getNoteStore() == null) return;
         for (int i = 0; i < 5; i++) {
             try {
-                if (getNoteStore() != null) {
-                    Notebook notebook = null;
-                    Note note = new Note();
-                    if (mNotebookName.length() > 0) {
-                        Log.d(LOG_TAG, "Search notebook: '" + mNotebookName + "'");
-                        List<Notebook> notebooks = getNoteStore().listNotebooks(getAuthToken());
-                        for (Notebook n : notebooks) {
-                              if (mNotebookName.equalsIgnoreCase(n.getName())) {
-                                  notebook = n;
-                                  break;
-                              } // if
-                        } // for
+                String guid = null;
+                Notebook notebook = null;
+                Note note = new Note();
+                if (mNotebookName.length() > 0) {
+                    Log.d(LOG_TAG, "Search notebook: '" + mNotebookName + "'");
+                    if (mNoteTable.containsKey(mNotebookName.toLowerCase())) {
+                        guid = mNoteTable.get(mNotebookName.toLowerCase());
+                    } else {
+                        Log.d(LOG_TAG, "Create new notebook: '" + mNotebookName + "'");
+                        notebook = new Notebook();
+                        notebook.setName(mNotebookName);
+                        try {
+                            notebook = getNoteStore().createNotebook(getAuthToken(), notebook);
+                        } catch (EDAMUserException e) {
+                            // maybe already exists.
+                            mToastMessage = getString(R.string.message_error_server) + "\n" + e.getMessage();
+                            Log.e(LOG_TAG, mToastMessage, e);
+                            notebook = null;
+                        }
                         if (notebook == null) {
-                            Log.d(LOG_TAG, "Create new notebook: '" + mNotebookName + "'");
-                            notebook = new Notebook();
-                            notebook.setName(mNotebookName);
-                            getNoteStore().createNotebook(getAuthToken(), notebook);
-                            notebook = getNoteStore().getNotebook(getAuthToken(), notebook.getName());
+                            Log.d(LOG_TAG, "Retreive notebook list...");
+                            mNotebooks = getNoteStore().listNotebooks(getAuthToken());
+                            for (Notebook n : mNotebooks) {
+                                if (mNotebookName.equalsIgnoreCase(n.getName())) {
+                                    notebook = n;
+                                    break;
+                                } // if
+                            } // for
                         } // notebook == null
-                    } // mEvernoteNotebook != ""
+                        if (notebook != null) guid = notebook.getGuid();
+                    } // mNoteTable...
+                } // mEvernoteNotebook != ""
+                Log.d(LOG_TAG, "Clipping the note...");
 
-                    Log.d(LOG_TAG, "Clipping the note...");
+                note.setTitle(mNoteTitle);
+                if (mTags.length() > 0) {
+                    note.setTagNames(java.util.Arrays.asList(mTags.split(", *")));
+                } // if
+                if (guid != null) {
+                    note.setNotebookGuid(guid);
+                } // if
+                note.setContent(mBodyText);
+                getNoteStore().createNote(getAuthToken(), note);
 
-                    note.setTitle(mNoteTitle);
-                    if (mTags.length() > 0) {
-                        note.setTagNames(java.util.Arrays.asList(mTags.split(",")));
-                    } // if
-                    if (notebook != null) {
-                        note.setNotebookGuid(notebook.getGuid());
-                    } // if
-                    note.setContent(mBodyText);
-                    getNoteStore().createNote(getAuthToken(), note);
-
-                    mToastMessage = getString(R.string.message_clipped) + ": " + mNoteTitle;
-                    Log.d(LOG_TAG, "done clipping");
-                } // if (getNoteStore)
+                mToastMessage = getString(R.string.message_clipped) + ": " + mNoteTitle;
+                Log.d(LOG_TAG, "done clipping");
                 return;
             } catch (TTransportException e) {
                 mToastMessage = getString(R.string.message_error_server) + "\n" + e.getMessage();
