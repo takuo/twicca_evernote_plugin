@@ -5,6 +5,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.ListIterator;
@@ -84,7 +85,29 @@ public class ECacheManager {
             while (line != null) {
                 pair = line.split(",", 2);
                 retval.put(pair[1].toLowerCase(), pair[0]);
-                Log.d(LOG_TAG, "key: '" + pair[1].toLowerCase() + "' val: '" + pair[0] + "'");
+                line = br.readLine();
+            }
+            br.close();
+            return retval;
+        } catch (Exception e){
+            Log.e(LOG_TAG, "Note Read error: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return retval;
+    }
+
+    public ArrayList<String> getNotebookNames () {
+        ArrayList<String> retval = new ArrayList<String>();
+        String line;
+        String[] pair;
+        File file = new File(mContext.getCacheDir(), CACHE_NOTES);
+        if (! file.canRead()) return retval;
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            line = br.readLine();
+            while (line != null) {
+                pair = line.split(",", 2);
+                retval.add(pair[1]);
                 line = br.readLine();
             }
             br.close();
@@ -97,6 +120,7 @@ public class ECacheManager {
     }
 
     public void writeTagsCache(List<Tag> tags) {
+        Log.d(LOG_TAG, "Write tags cache");
         try {
             String tagString = "";
             File file = new File(mContext.getCacheDir(), CACHE_TAGS);
@@ -115,6 +139,7 @@ public class ECacheManager {
     }
 
     public void writeNoteCache(List<Notebook> notebooks) {
+        Log.d(LOG_TAG, "Write note cache");
         try {
             String content = "";
             File file = new File(mContext.getCacheDir(), CACHE_NOTES);
@@ -133,6 +158,7 @@ public class ECacheManager {
     }
 
     public boolean writeAuthCache(String token, long expire_at) {
+        Log.d(LOG_TAG, "Write auth cache");
         try {
             File file = new File(mContext.getCacheDir(), CACHE_TOKEN);
             BufferedOutputStream fos = new BufferedOutputStream(new FileOutputStream(file));
