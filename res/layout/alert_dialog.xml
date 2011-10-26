@@ -15,6 +15,9 @@
      android:id="@+id/textView1"
      android:layout_width="wrap_content"
      android:layout_height="wrap_content" />
+    <Spinner android:layout_width="fill_parent"
+     android:id="@+id/notebook_list"
+     android:layout_height="wrap_content" />
     <EditText android:layout_width="fill_parent"
      android:id="@+id/edit_notebook"
      android:layout_height="wrap_content" />
