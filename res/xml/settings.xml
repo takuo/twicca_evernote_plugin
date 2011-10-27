@@ -13,9 +13,12 @@
           android:persistent="false"
           android:title="@string/pref_evernote_auth"
           android:summary="@string/pref_evernote_auth_summary" /> -->
-        <EditTextPreference android:key="pref_evernote_notebook"
+        <jp.takuo.android.twicca.plugin.evernote.NotebookPreference
+          android:key="pref_evernote_notebook"
           android:title="@string/pref_evernote_notebook" />
-        <EditTextPreference android:key="pref_evernote_tags" android:title="@string/pref_evernote_tags" />
+        <jp.takuo.android.twicca.plugin.evernote.MultiAutoCompleteEditTextPreference
+          android:key="pref_evernote_tags"
+          android:title="@string/pref_evernote_tags" />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_misc_title">
         <CheckBoxPreference android:title="@string/pref_confirm_dialog"
