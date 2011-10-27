@@ -31,6 +31,6 @@
     <string name="pref_evernote_auth">Try to authentication</string>
     <string name="pref_evernote_auth_summary">Try to authentication with setting values</string>
     <string name="message_do_background">Clipping in background</string>
-    <string name="new_or_default">[New or default]</string>
+    <string name="new_or_default">[Enter or default]</string>
     <string name="hint_notebook">New notebook name</string>
 </resources>

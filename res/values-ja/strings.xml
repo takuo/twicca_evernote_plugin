@@ -29,6 +29,6 @@
     <string name="message_error_server">エラー: Evernote サーバへ接続できませんでした</string>
     <string name="message_error_version">エラー: プロトコルバージョンが一致しません</string>
     <string name="message_do_background">バックグラウンドでクリップします</string>
-    <string name="new_or_default">[新規作成・デフォルト]</string>
+    <string name="new_or_default">[入力する・デフォルト]</string>
     <string name="hint_notebook">新規ノートブック名</string>
 </resources>
