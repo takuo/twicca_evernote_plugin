@@ -45,18 +45,18 @@ public class ClippingService extends IntentService {
     private Context mContext;
 
     private static final String LOG_TAG = "ClippingService";
-    private static final String CONSUMER_KEY = "sample";
-    private static final String CONSUMER_SECRET = "abcdef0123456789";
-    private static final String USER_AGENT = "TwiccaEvernotePlugin (Android EDAM)/" +
+    public static final String CONSUMER_KEY = "sample";
+    public static final String CONSUMER_SECRET = "abcdef0123456789";
+    public static final String USER_AGENT = "TwiccaEvernotePlugin (Android EDAM)/" +
         Constants.EDAM_VERSION_MAJOR + "." + 
         Constants.EDAM_VERSION_MINOR;
     private String mToastMessage = null;
 
     // Change this value to "www.evernote.com" to use the Evernote production
     // server instead of the sandbox server.
-    private static final String EVERNOTE_HOST = "sandbox.evernote.com";
-    private static final String USERSTORE_URL = "https://" + EVERNOTE_HOST + "/edam/user";
-    private static final String NOTESTORE_URL_BASE = "https://" + EVERNOTE_HOST + "/edam/note/";
+    public static final String EVERNOTE_HOST = "sandbox.evernote.com";
+    public static final String USERSTORE_URL = "https://" + EVERNOTE_HOST + "/edam/user";
+    public static final String NOTESTORE_URL_BASE = "https://" + EVERNOTE_HOST + "/edam/note/";
 
     private Hashtable<String, String> mNoteTable;
     private String mAuthToken;
