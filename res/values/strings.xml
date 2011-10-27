@@ -28,9 +28,11 @@
     <string name="message_error_api">Error: Failed to setup API, maybe a Bug</string>
     <string name="message_error_server">Error: Failed to connect to Evernote server</string>
     <string name="message_error_version">Error: Protocol version mismatching</string>
-    <string name="pref_evernote_auth">Try to authentication</string>
-    <string name="pref_evernote_auth_summary">Try to authentication with setting values</string>
     <string name="message_do_background">Clipping in background</string>
     <string name="new_or_default">[Enter or default]</string>
     <string name="hint_notebook">New notebook name</string>
+    <string name="update_cache">Update cache</string>
+    <string name="authentication">Authentication...</string>
+    <string name="getting_data">Getting notebooks and tags...</string>
+    <string name="retry">retry</string>
 </resources>
