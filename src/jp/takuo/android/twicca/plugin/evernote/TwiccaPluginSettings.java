@@ -26,10 +26,14 @@ import android.preference.PreferenceManager;
 
 public class TwiccaPluginSettings extends PreferenceActivity implements OnPreferenceChangeListener {
     /** Called when the activity is first created. */
+    private ECacheManager cacheManager;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        cacheManager = new ECacheManager(getApplicationContext());
         EditTextPreference editPref;
+        MultiAutoCompleteEditTextPreference meditPref;
+        NotebookPreference notebookPref;
         String crypted;
         String decrypt = "";
         String summary = "";
@@ -54,12 +58,14 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
         editPref = (EditTextPreference)findPreference(TwiccaEvernoteUploader.PREF_EVERNOTE_USERNAME);
         editPref.setSummary(editPref.getText());
         editPref.setOnPreferenceChangeListener(this);
-        editPref = (EditTextPreference)findPreference(TwiccaEvernoteUploader.PREF_EVERNOTE_NOTEBOOK);
-        editPref.setSummary(editPref.getText());
-        editPref.setOnPreferenceChangeListener(this);
-        editPref = (EditTextPreference)findPreference(TwiccaEvernoteUploader.PREF_EVERNOTE_TAGS);
-        editPref.setSummary(editPref.getText());
-        editPref.setOnPreferenceChangeListener(this);
+        notebookPref = (NotebookPreference)findPreference(TwiccaEvernoteUploader.PREF_EVERNOTE_NOTEBOOK);
+        notebookPref.setSummary(notebookPref.getText());
+        notebookPref.setOnPreferenceChangeListener(this);
+        notebookPref.setNotebookList(cacheManager.getNotebookNames());
+        meditPref = (MultiAutoCompleteEditTextPreference)findPreference(TwiccaEvernoteUploader.PREF_EVERNOTE_TAGS);
+        meditPref.setSummary(meditPref.getText());
+        meditPref.setOnPreferenceChangeListener(this);
+        meditPref.setStringArray(cacheManager.getTagNames());
     }
 
     @Override
