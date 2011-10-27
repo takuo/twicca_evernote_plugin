@@ -19,6 +19,11 @@
         <jp.takuo.android.twicca.plugin.evernote.MultiAutoCompleteEditTextPreference
           android:key="pref_evernote_tags"
           android:title="@string/pref_evernote_tags" />
+        <Preference android:id="@+id/update_cache"
+            android:key="pref_update_cache"
+            android:persistent="false"
+            android:title="@string/update_cache"
+            android:dependency="pref_evernote_password" />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_misc_title">
         <CheckBoxPreference android:title="@string/pref_confirm_dialog"
