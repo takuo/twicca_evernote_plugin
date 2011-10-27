@@ -204,7 +204,7 @@ public class TwiccaEvernoteUploader extends Activity {
             builder.setTitle(R.string.confirm_clip);
 
             mEditNotebook = (EditText)layout.findViewById(R.id.edit_notebook);
-            mEditNotebook.setHint(getString(R.string.hint_notebook));
+            mEditNotebook.setHint(getString(R.string.hint_empty));
 
             mSpinner = (Spinner)layout.findViewById(R.id.notebook_list);
             ArrayAdapter<String> items = new ArrayAdapter<String>(this,

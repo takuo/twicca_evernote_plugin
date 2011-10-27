@@ -55,6 +55,7 @@ public class NotebookPreference extends DialogPreference {
         mEditText = new EditText(context, attrs);
         mEditText.setId(android.R.id.edit);
         mEditText.setEnabled(true);
+        mEditText.setHint(context.getString(R.string.hint_empty));
     }
 
     public NotebookPreference(Context context, AttributeSet attrs) {

@@ -30,9 +30,10 @@
     <string name="message_error_version">エラー: プロトコルバージョンが一致しません</string>
     <string name="message_do_background">バックグラウンドでクリップします</string>
     <string name="new_or_default">[入力する・デフォルト]</string>
-    <string name="hint_notebook">新規ノートブック名</string>
+    <string name="hint_notebook">ノートブック名を入力</string>
     <string name="update_cache">キャッシュを更新</string>
     <string name="authentication">認証中...</string>
     <string name="getting_data">ノートブックとタグを取得中...</string>
     <string name="retry">リトライ</string>
+    <string name="hint_empty">デフォルトノートブック</string>
 </resources>

@@ -30,9 +30,10 @@
     <string name="message_error_version">Error: Protocol version mismatching</string>
     <string name="message_do_background">Clipping in background</string>
     <string name="new_or_default">[Enter or default]</string>
-    <string name="hint_notebook">New notebook name</string>
+    <string name="hint_notebook">Enter a notebook name</string>
     <string name="update_cache">Update cache</string>
     <string name="authentication">Authentication...</string>
     <string name="getting_data">Getting notebooks and tags...</string>
     <string name="retry">retry</string>
+    <string name="hint_empty">default notebook</string>
 </resources>
