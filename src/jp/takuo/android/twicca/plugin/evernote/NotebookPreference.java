@@ -77,7 +77,7 @@ public class NotebookPreference extends DialogPreference {
     }
 
     public String getText() {
-        return mText;
+        return mText != null ? mText : "";
     }
 
     public int getSelection() {
