@@ -167,6 +167,8 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
             if (mToastMessage != null) {
                 Toast.makeText(getApplicationContext(), mToastMessage, Toast.LENGTH_LONG).show();
             }
+            ((NotebookPreference)findPreference(TwiccaEvernoteUploader.PREF_EVERNOTE_NOTEBOOK)).setNotebookList(cacheManager.getNotebookNames());
+            ((MultiAutoCompleteEditTextPreference)findPreference(TwiccaEvernoteUploader.PREF_EVERNOTE_TAGS)).setStringArray(cacheManager.getTagNames());
         }
 
         @Override
