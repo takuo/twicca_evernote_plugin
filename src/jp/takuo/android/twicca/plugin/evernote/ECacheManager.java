@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.ListIterator;
@@ -127,11 +128,11 @@ public class ECacheManager {
                 line = br.readLine();
             }
             br.close();
-            return retval;
         } catch (Exception e){
             Log.e(LOG_TAG, "Note Read error: " + e.getMessage());
             e.printStackTrace();
         }
+        Collections.sort(retval);
         return retval;
     }
 
