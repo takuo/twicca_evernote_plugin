@@ -27,6 +27,7 @@ import com.evernote.edam.error.EDAMNotFoundException;
 import com.evernote.edam.error.EDAMUserException;
 import com.evernote.edam.notestore.NoteStore;
 import com.evernote.edam.type.Note;
+import com.evernote.edam.type.NoteAttributes;
 import com.evernote.edam.type.Notebook;
 import com.evernote.edam.type.Tag;
 import com.evernote.edam.type.User;
@@ -75,6 +76,7 @@ public class ClippingService extends IntentService {
     private String mTags;
     private String mNoteTitle;
     private String mBodyText;
+    private String mTweetURL;
     private Handler mHandler;
     private ECacheManager cacheManager;
 
@@ -162,6 +164,7 @@ public class ClippingService extends IntentService {
         mBodyText         = intent.getStringExtra(Intent.EXTRA_TEXT);
         mEvernoteUsername = intent.getStringExtra("username");
         mEvernotePassword = intent.getStringExtra("password");
+        mTweetURL         = intent.getStringExtra("url");
         String token = null;
 
         token = cacheManager.getAuthToken();
@@ -274,6 +277,9 @@ public class ClippingService extends IntentService {
                     note.setNotebookGuid(guid);
                 } // if
                 note.setContent(mBodyText);
+                NoteAttributes attrs = new NoteAttributes();
+                attrs.setSourceURL(mTweetURL);
+                note.setAttributes(attrs);
                 try {
                     getNoteStore().createNote(getAuthToken(), note);
                 } catch (EDAMNotFoundException ee) {

@@ -140,6 +140,7 @@ public class TwiccaEvernoteUploader extends Activity {
         intent.putExtra("username", mEvernoteUsername);
         intent.putExtra("password", mEvernotePassword);
         intent.putExtra(Intent.EXTRA_TEXT, content);
+        intent.putExtra("url", "http://twitter.com/"+ mScreenName + "/statuses/"+ mTweetId);
         Toast.makeText(mContext, getString(R.string.message_do_background), Toast.LENGTH_SHORT).show();
         startService(intent);
     }
