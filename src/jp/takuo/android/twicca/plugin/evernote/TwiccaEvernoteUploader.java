@@ -17,7 +17,9 @@
 package jp.takuo.android.twicca.plugin.evernote;
 
 /* from EDAM sample */
+import java.util.AbstractCollection;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,6 +51,31 @@ public class TwiccaEvernoteUploader extends Activity {
     public static final String SEED = "encrypt";
     private static final String LOG_TAG = "TwiccaEvernote";
     private static final int REQUEST_CODE = 210;
+
+    /* hashtag related */
+    private static final String SEARCH_URL = "https://twitter.com/search?q=%23";
+    private static final String LATIN_ACCENTS_CHARS = "\\u00c0-\\u00d6\\u00d8-\\u00f6\\u00f8-\\u00ff\\u015f";
+    private static final String HASHTAG_ALPHA_CHARS = "a-z" + LATIN_ACCENTS_CHARS +
+            "\\u0400-\\u04ff\\u0500-\\u0527" +  // Cyrillic
+            "\\u2de0–\\u2dff\\ua640–\\ua69f" +  // Cyrillic Extended A/B
+            "\\u1100-\\u11ff\\u3130-\\u3185\\uA960-\\uA97F\\uAC00-\\uD7AF\\uD7B0-\\uD7FF" + // Hangul (Korean)
+            "\\p{InHiragana}\\p{InKatakana}" +  // Japanese Hiragana and Katakana
+            "\\p{InCJKUnifiedIdeographs}" +     // Japanese Kanji / Chinese Han
+            "\\u3005\\u303b" +                  // Kanji/Han iteration marks
+            "\\uff21-\\uff3a\\uff41-\\uff5a" +  // full width Alphabet
+            "\\uff66-\\uff9f" +                 // half width Katakana
+            "\\uffa1-\\uffdc";                  // half width Hangul (Korean)
+    private static final String HASHTAG_ALPHA_NUMERIC_CHARS = "0-9\\uff10-\\uff19_" + HASHTAG_ALPHA_CHARS;
+    private static final String HASHTAG_ALPHA = "[" + HASHTAG_ALPHA_CHARS +"]";
+    private static final String HASHTAG_ALPHA_NUMERIC = "[" + HASHTAG_ALPHA_NUMERIC_CHARS +"]";
+    private static final Pattern HASHTAG_PATTERN = Pattern.compile(
+            "(^|[^&/" + HASHTAG_ALPHA_NUMERIC_CHARS + "])(#|\uFF03)(" +
+             HASHTAG_ALPHA_NUMERIC + "*" +
+             HASHTAG_ALPHA +
+             HASHTAG_ALPHA_NUMERIC + "*)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern HASHTAG_END = Pattern.compile("^(?:[#＃]|://)");
+    /* end hashtag related */
+
     private static final Pattern URL_PATTERN = Pattern.compile(
             "(https?://){1}[\\w\\.\\-/:\\#\\?\\=\\&\\;\\%\\~\\+]+", Pattern.CASE_INSENSITIVE);
     private static final String NOTE_PREFIX =
@@ -64,6 +91,8 @@ public class TwiccaEvernoteUploader extends Activity {
     public static final String PREF_EVERNOTE_TAGS     = "pref_evernote_tags";
     public static final String PREF_EVERNOTE_CRYPTED  = "pref_evernote_crypted";
     public static final String PREF_CONFIRM_DIALOG    = "pref_confirm_dialog";
+    public static final String PREF_HASHTAG_CLIPTAG   = "pref_hashtag_cliptag";
+    public static final String PREF_NAME_CLIPTAG      = "pref_name_cliptag";
 
     private Context mContext;
 
@@ -118,7 +147,8 @@ public class TwiccaEvernoteUploader extends Activity {
         Time time = new Time();
         time.set(Long.parseLong(mCreatedAt));
         Matcher matcher = URL_PATTERN.matcher(mBodyText);
-        mBodyText =  matcher.replaceAll("<a target=\"_blank\" href=\"$0\">$0</a>").replace("\n", "<br />");
+        mBodyText = matcher.replaceAll("<a target=\"_blank\" href=\"$0\">$0</a>").replace("\n", "<br />");
+        mBodyText = autoLinkHashtags(mBodyText);
         String content =
             NOTE_PREFIX +
             "<table style='border-radius: 10px; background-color: #eeeeee'>" +
@@ -133,6 +163,15 @@ public class TwiccaEvernoteUploader extends Activity {
             "</td></tr>" +
             "</table>" +
             NOTE_SUFFIX;
+
+        if (mPrefs.getBoolean(PREF_NAME_CLIPTAG, false)) {
+            if (mEvernoteTags.length() > 0) {
+                mEvernoteTags += "," + mScreenName;
+            } else {
+                mEvernoteTags = mScreenName;
+            } // mEvernoteTags
+        } // PREF_NAME_CLIPTAG
+
         Intent intent = new Intent(this, ClippingService.class);
         intent.putExtra("notebook", mEvernoteNotebook);
         intent.putExtra("tags", mEvernoteTags);
@@ -290,4 +329,45 @@ public class TwiccaEvernoteUploader extends Activity {
             finish();
         }
     }
+
+    /* utility */
+    public static String join(AbstractCollection<String> s, String delimiter) {
+        if (s.isEmpty()) return "";
+        Iterator<String> iter = s.iterator();
+        StringBuffer buffer = new StringBuffer(iter.next());
+        while (iter.hasNext()) buffer.append(delimiter).append(iter.next());
+        return buffer.toString();
+    }
+
+    public String autoLinkHashtags(String text) {
+        StringBuffer sb = new StringBuffer();
+        ArrayList<String> tags = new ArrayList<String>();
+        if (mEvernoteTags.length() > 0) tags.add(mEvernoteTags);
+        Matcher matcher = HASHTAG_PATTERN.matcher(text);
+        while (matcher.find()) {
+            String after = text.substring(matcher.end());
+            if (!HASHTAG_END.matcher(after).find()) {
+                StringBuilder replacement = new StringBuilder(text.length() * 2);
+                replacement.append(matcher.group(1))
+                    .append("<a href=\"").append(SEARCH_URL)
+                    .append(matcher.group(3)).append("\"")
+                    .append(" target=\"_blank\" title=\"#").append(matcher.group(3))
+                    .append("\"");
+                replacement.append(">").append(matcher.group(2))
+                    .append(matcher.group(3)).append("</a>");
+                matcher.appendReplacement(sb, replacement.toString());
+                if (!tags.contains(matcher.group(3))) {
+                    tags.add(matcher.group(3));
+                } // if
+            } else {
+                // not a valid hashtag
+                matcher.appendReplacement(sb, "$0");
+            } // if valid?
+        } // while
+        matcher.appendTail(sb);
+        if (mPrefs.getBoolean(PREF_HASHTAG_CLIPTAG, false)) {
+            mEvernoteTags = join(tags, ",");
+        } // if
+        return sb.toString();
+    } // func()
 }
