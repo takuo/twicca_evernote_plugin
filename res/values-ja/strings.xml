@@ -17,6 +17,11 @@
     <string name="pref_evernote_notebook">ノートブック</string>
     <string name="pref_evernote_tags">タグ</string>
     <string name="pref_confirm_dialog">確認ダイアログを表示する</string>
+    <string name="pref_hashtag_cliptag">ハッシュタグをタグに追加</string>
+    <string name="pref_name_cliptag">スクリーンネームをタグに追加</string>
+    <string name="summary_confirm_dialog">クリップする前に確認ダイアログを表示します</string>
+    <string name="summary_hashtag_cliptag">ツイートに含まれるハッシュタグ(全て)をクリップのタグとして追加します</string>
+    <string name="summary_name_cliptag">ツイートの発言者スクリーンネームをクリップのタグとして追加します</string>
     <string name="pref_misc_title">その他の設定</string>
     <string name="account_warning">Evernote のアカウントを設定してください</string>
     <string name="yes">はい</string>

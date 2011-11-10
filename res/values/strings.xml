@@ -17,6 +17,11 @@
     <string name="pref_evernote_notebook">Notebook</string>
     <string name="pref_evernote_tags">Tags</string>
     <string name="pref_confirm_dialog">Show confirm dialog</string>
+    <string name="pref_hashtag_cliptag">Add hashtags as tag</string>
+    <string name="pref_name_cliptag">Add owner\'s screen name as tag</string>
+    <string name="summary_confirm_dialog">Show confirm dialog before clip</string>
+    <string name="summary_hashtag_cliptag">All hashtags in a tweet will be added as clip tag</string>
+    <string name="summary_name_cliptag">Screen name of a tweet owner will be added as clip tag</string>
     <string name="pref_misc_title">Misc settings</string>
     <string name="account_warning">Please setup Evernote account</string>
     <string name="yes">Yes</string>
