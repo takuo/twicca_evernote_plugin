@@ -57,7 +57,7 @@ public class TwiccaEvernoteUploader extends Activity {
     private static final String LATIN_ACCENTS_CHARS = "\\u00c0-\\u00d6\\u00d8-\\u00f6\\u00f8-\\u00ff\\u015f";
     private static final String HASHTAG_ALPHA_CHARS = "a-z" + LATIN_ACCENTS_CHARS +
             "\\u0400-\\u04ff\\u0500-\\u0527" +  // Cyrillic
-            "\\u2de0–\\u2dff\\ua640–\\ua69f" +  // Cyrillic Extended A/B
+            "\\u2de0-\\u2dff\\ua640-\\ua69f" +  // Cyrillic Extended A/B
             "\\u1100-\\u11ff\\u3130-\\u3185\\uA960-\\uA97F\\uAC00-\\uD7AF\\uD7B0-\\uD7FF" + // Hangul (Korean)
             "\\p{InHiragana}\\p{InKatakana}" +  // Japanese Hiragana and Katakana
             "\\p{InCJKUnifiedIdeographs}" +     // Japanese Kanji / Chinese Han
@@ -73,7 +73,7 @@ public class TwiccaEvernoteUploader extends Activity {
              HASHTAG_ALPHA_NUMERIC + "*" +
              HASHTAG_ALPHA +
              HASHTAG_ALPHA_NUMERIC + "*)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern HASHTAG_END = Pattern.compile("^(?:[#＃]|://)");
+    private static final Pattern HASHTAG_END = Pattern.compile("^(?:[#\uFF03]|://)");
     /* end hashtag related */
 
     private static final Pattern URL_PATTERN = Pattern.compile(
