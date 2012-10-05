@@ -191,6 +191,7 @@ public class NotebookPreference extends DialogPreference {
         return mSpinner;
     }
 
+    @SuppressWarnings("unchecked")
     public void setNotebookList(ArrayList<String> array) {
         mNotebooks = (ArrayList<String>) array.clone();
         String notebook = getText();

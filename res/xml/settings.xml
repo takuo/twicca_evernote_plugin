@@ -3,16 +3,14 @@
   xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory android:title="@string/pref_evernote_settings_title"
                         >
-        <EditTextPreference android:key="pref_evernote_username"
-          android:title="@string/pref_evernote_username" />
-        <EditTextPreference android:key="pref_evernote_password"
-          android:persistent="false"
-          android:password="true"
-          android:title="@string/pref_evernote_password" />
         <!-- <Preference android:key="try_authenticate"
           android:persistent="false"
           android:title="@string/pref_evernote_auth"
           android:summary="@string/pref_evernote_auth_summary" /> -->
+        <Preference android:summary="@string/summary_authentication"
+                    android:title="@string/pref_authentication"
+                    android:key="pref_do_auth"
+                    android:persistent="false"/>
         <jp.takuo.android.twicca.plugin.evernote.NotebookPreference
           android:key="pref_evernote_notebook"
           android:title="@string/pref_evernote_notebook" />
@@ -22,8 +20,8 @@
         <Preference android:id="@+id/update_cache"
             android:key="pref_update_cache"
             android:persistent="false"
-            android:title="@string/update_cache"
-            android:dependency="pref_evernote_password" />
+            android:title="@string/update_cache"/>
+        
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_misc_title">
         <CheckBoxPreference android:title="@string/pref_confirm_dialog"
@@ -38,4 +36,3 @@
     </PreferenceCategory>
     
 </PreferenceScreen>
-

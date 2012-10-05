@@ -182,7 +182,7 @@ public class MultiAutoCompleteEditTextPreference extends DialogPreference {
         public SavedState (Parcelable superState) {
             super(superState);
         }
-
+/*
         public static final Parcelable.Creator<SavedState> CREATOR =
                 new Parcelable.Creator<SavedState>() {
             public SavedState createFromParcel(Parcel in) {
@@ -194,5 +194,6 @@ public class MultiAutoCompleteEditTextPreference extends DialogPreference {
                 
             }
         };
+        */
     }
 }

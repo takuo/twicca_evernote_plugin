@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="jp.takuo.android.twicca.plugin.evernote"
-      android:versionCode="12" android:versionName="1.6.1"
+      android:versionCode="14" android:versionName="1.7.0"
       android:installLocation="auto">
-    <uses-permission android:name="android.permission.INTERNET"></uses-permission>
+
     <application android:icon="@drawable/icon" android:label="@string/app_name">
         <activity android:name=".TwiccaEvernoteUploader"
              android:label="@string/activity_name"
@@ -19,11 +19,23 @@
                  <action android:name="jp.r246.twicca.ACTION_PLUGIN_SETTINGS" />
                  <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-        </activity>>
+        </activity>
 
+        <activity
+          android:name="com.evernote.client.oauth.android.EvernoteOAuthActivity"
+          android:launchMode="singleTask"
+          android:configChanges="orientation|keyboard">
+          <intent-filter>
+            <data android:scheme="en-northeye" />
+            <action android:name="android.intent.action.VIEW" />                
+            <category android:name="android.intent.category.BROWSABLE"/>
+            <category android:name="android.intent.category.DEFAULT" /> 
+          </intent-filter>
+        </activity>
+        
         <service android:name=".ClippingService"></service>
 
     </application>
-    <uses-sdk android:minSdkVersion="7" />
-
+    <uses-sdk android:minSdkVersion="8" />
+    <uses-permission android:name="android.permission.INTERNET"></uses-permission>
 </manifest> 

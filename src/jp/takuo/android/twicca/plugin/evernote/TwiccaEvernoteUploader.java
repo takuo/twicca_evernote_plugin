@@ -85,8 +85,6 @@ public class TwiccaEvernoteUploader extends Activity {
     private static final String NOTE_SUFFIX = "</en-note>";
 
     // Preferences keys
-    public static final String PREF_EVERNOTE_USERNAME = "pref_evernote_username";
-    public static final String PREF_EVERNOTE_PASSWORD = "pref_evernote_password";
     public static final String PREF_EVERNOTE_NOTEBOOK = "pref_evernote_notebook";
     public static final String PREF_EVERNOTE_TAGS     = "pref_evernote_tags";
     public static final String PREF_EVERNOTE_CRYPTED  = "pref_evernote_crypted";
@@ -107,8 +105,6 @@ public class TwiccaEvernoteUploader extends Activity {
     
     // Evernote settings
     private SharedPreferences mPrefs;
-    private String mEvernoteUsername;
-    private String mEvernotePassword;
     private String mEvernoteNotebook;
     private String mEvernoteTags;
 
@@ -176,8 +172,6 @@ public class TwiccaEvernoteUploader extends Activity {
         intent.putExtra("notebook", mEvernoteNotebook);
         intent.putExtra("tags", mEvernoteTags);
         intent.putExtra("title", "Tweet by " + mUsername +" (@" + mScreenName + ")");
-        intent.putExtra("username", mEvernoteUsername);
-        intent.putExtra("password", mEvernotePassword);
         intent.putExtra(Intent.EXTRA_TEXT, content);
         intent.putExtra("url", "http://twitter.com/"+ mScreenName + "/statuses/"+ mTweetId);
         Toast.makeText(mContext, getString(R.string.message_do_background), Toast.LENGTH_SHORT).show();
@@ -186,52 +180,8 @@ public class TwiccaEvernoteUploader extends Activity {
 
     private void run () {
         mPrefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-        mEvernoteUsername = mPrefs.getString(PREF_EVERNOTE_USERNAME, "");
-        mEvernotePassword = mPrefs.getString(PREF_EVERNOTE_PASSWORD, "");
         mEvernoteNotebook = mPrefs.getString(PREF_EVERNOTE_NOTEBOOK, "");
         mEvernoteTags = mPrefs.getString(PREF_EVERNOTE_TAGS, "");
-
-        String crypt = mPrefs.getString(PREF_EVERNOTE_CRYPTED, "");
-        if (mEvernotePassword.length() > 0) {
-            try {
-            crypt = SimpleCrypt.encrypt(SEED, mEvernotePassword);
-            mPrefs.edit().putString(PREF_EVERNOTE_CRYPTED, crypt).commit();
-            mPrefs.edit().remove(PREF_EVERNOTE_PASSWORD).commit();
-            Log.d(LOG_TAG, "plain text password has been migrate to crypted");
-            } catch (Exception e) {
-                Log.d(LOG_TAG, "Failed to encrypt plain password: " + mEvernotePassword);
-            }
-        }
-        if (crypt.length() > 0) {
-            try {
-                mEvernotePassword = SimpleCrypt.decrypt(SEED, crypt);
-            } catch (Exception e) {
-                Log.d(LOG_TAG, "Failed to decrypt password: " + crypt);
-            }
-        }
-        if (mEvernoteUsername.length() == 0 || mEvernotePassword.length() == 0) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(TwiccaEvernoteUploader.this);
-            builder.setTitle(R.string.settings_name);
-            builder.setMessage(getString(R.string.account_warning));
-            builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    Intent settings = new Intent(TwiccaEvernoteUploader.this, TwiccaPluginSettings.class);
-                    TwiccaEvernoteUploader.this.startActivityForResult(settings, REQUEST_CODE);
-                }
-            }
-           );
-
-            builder.setNegativeButton(getString(R.string.no), new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    TwiccaEvernoteUploader.this.finish();
-                }
-            }
-            );
-            builder.create().show();
-            return;
-        }
 
         if (mPrefs.getBoolean(PREF_CONFIRM_DIALOG, true)) {
             ArrayList<String> notebooks = cacheManager.getNotebookNames();

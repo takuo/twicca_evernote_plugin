@@ -16,24 +16,18 @@
 
 package jp.takuo.android.twicca.plugin.evernote;
 
-import org.apache.thrift.protocol.TBinaryProtocol;
 
-import com.evernote.android.edam.TAndroidHttpClient;
-import com.evernote.edam.error.EDAMUserException;
 import com.evernote.edam.notestore.NoteStore;
-import com.evernote.edam.type.User;
-import com.evernote.edam.userstore.AuthenticationResult;
-import com.evernote.edam.userstore.UserStore;
+
+import com.evernote.client.conn.ApplicationInfo;
+import com.evernote.client.oauth.android.EvernoteSession;
 
 import android.app.ProgressDialog;
-import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceActivity;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -42,38 +36,17 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
     private static final String LOG_TAG = TwiccaPluginSettings.class.toString();
     private ECacheManager cacheManager;
     private String mToastMessage;
+    private EvernoteSession mSession;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         cacheManager = new ECacheManager(getApplicationContext());
-        EditTextPreference editPref;
+        Preference pref;
         MultiAutoCompleteEditTextPreference meditPref;
         NotebookPreference notebookPref;
-        String crypted;
-        String decrypt = "";
-        String summary = "";
-        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         addPreferencesFromResource(R.xml.settings);
-        editPref = (EditTextPreference)findPreference(TwiccaEvernoteUploader.PREF_EVERNOTE_PASSWORD);
-        crypted = prefs.getString(TwiccaEvernoteUploader.PREF_EVERNOTE_CRYPTED, "");
-        if (crypted.length() > 0) {
-            try {
-                decrypt = SimpleCrypt.decrypt(TwiccaEvernoteUploader.SEED, crypted);
-            } catch (Exception e){
-                // do nothing
-            }
-        }
-        for (int i = 0 ; i < decrypt.length(); i++) {
-            summary = summary.concat("*");
-        }
-        editPref.setSummary(summary);
-        editPref.setText(decrypt);
-        editPref.setDefaultValue(decrypt);
-        editPref.setOnPreferenceChangeListener(this);
-        editPref = (EditTextPreference)findPreference(TwiccaEvernoteUploader.PREF_EVERNOTE_USERNAME);
-        editPref.setSummary(editPref.getText());
-        editPref.setOnPreferenceChangeListener(this);
+
         notebookPref = (NotebookPreference)findPreference(TwiccaEvernoteUploader.PREF_EVERNOTE_NOTEBOOK);
         notebookPref.setSummary(notebookPref.getText());
         notebookPref.setOnPreferenceChangeListener(this);
@@ -82,51 +55,53 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
         meditPref.setSummary(meditPref.getText());
         meditPref.setOnPreferenceChangeListener(this);
         meditPref.setStringArray(cacheManager.getTagNames());
+
+        setupSession();
+
+        pref = findPreference("pref_do_auth");
+        pref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+           @Override
+           public boolean onPreferenceClick(Preference preference) {
+               if (!mSession.isLoggedIn())
+                   mSession.authenticate(getApplicationContext());
+            return false;
+           }
+        });
         Preference preference = findPreference("pref_update_cache");
         preference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
-                String username =
-                    prefs.getString(TwiccaEvernoteUploader.PREF_EVERNOTE_USERNAME, "");
-                String password =
-                    prefs.getString(TwiccaEvernoteUploader.PREF_EVERNOTE_CRYPTED, "");
-                if (username.length() == 0 || password.length() == 0) return false;
-                try {
-                    password = SimpleCrypt.decrypt(TwiccaEvernoteUploader.SEED, password);
-                } catch (Exception e) {
-                    // FIXME:
-                    return false;
-                }
                 UpdateCacheTask task = new UpdateCacheTask();
-                task.execute(username, password);
+                if (!mSession.isLoggedIn())
+                    mSession.authenticate(getApplicationContext());
+                task.execute();
                 return false;
             }
         });
     }
 
+    private void setupSession() {
+        ApplicationInfo info =
+                new ApplicationInfo(ClippingService.CONSUMER_KEY,
+                        ClippingService.CONSUMER_SECRET, ClippingService.EVERNOTE_HOST,
+                        ClippingService.APP_NAME, ClippingService.APP_VERSION);
+        mSession = new EvernoteSession(info, getSharedPreferences("TwiccaPluginSettings", MODE_PRIVATE), getFilesDir());
+    }
+
+    @Override
+    public void onResume() {
+      super.onResume();
+      // Complete the Evernote authentication process if necessary
+      if (!mSession.completeAuthentication(getSharedPreferences("TwiccaPluginSettings", MODE_PRIVATE))) {
+        // We only want to do this when we're resuming after authentication...
+        Toast.makeText(this, "Evernote login failed", Toast.LENGTH_LONG).show();
+      }
+    }
+
     @Override
     public boolean onPreferenceChange(Preference pref, Object newValue) {
-        String key = pref.getKey();
         String value = (String)newValue;
         String summary = value;
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor e = prefs.edit();
-        if (key.equals(TwiccaEvernoteUploader.PREF_EVERNOTE_USERNAME)) {
-            ECacheManager.clear(getCacheDir());
-        } else if (key.equals(TwiccaEvernoteUploader.PREF_EVERNOTE_PASSWORD)) {
-            String encrypted = "";
-            try {
-                encrypted = SimpleCrypt.encrypt(TwiccaEvernoteUploader.SEED, value);
-            } catch (Exception exp) {
-                // do nothing
-            }
-            e.putString(TwiccaEvernoteUploader.PREF_EVERNOTE_CRYPTED, encrypted);
-            e.commit();
-            summary = "";
-            for (int i = 0 ; i < value.length(); i++) {
-                summary = summary.concat("*");
-            }
-        }
         pref.setSummary(summary);
         return true;
     }
@@ -134,8 +109,6 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
     public class UpdateCacheTask extends AsyncTask<String, String, Void> {
         private ProgressDialog mProgressDialog;
 
-        private User mUser;
-        private UserStore.Client mUserStore;
         private NoteStore.Client mNoteStore;
         private String mAuthToken;
 
@@ -178,11 +151,8 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
 
         @Override
         protected Void doInBackground(String... params) {
-            String username = params[0];
-            String password = params[1];
-            if (doAuth(username, password)) {
-                doNoteStore();
-            }
+            mAuthToken = mSession.getAuthToken();
+            doNoteStore();
             return null;
         }
 
@@ -190,12 +160,7 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
             publishProgress(getString(R.string.getting_data));
             for (int i=0; i<5;i++) {
                 try {
-                    String noteStoreUrl = ClippingService.NOTESTORE_URL_BASE + mUser.getShardId();
-                    TAndroidHttpClient noteStoreTrans =
-                        new TAndroidHttpClient(noteStoreUrl, ClippingService.USER_AGENT,
-                                getFilesDir());
-                    TBinaryProtocol noteStoreProt = new TBinaryProtocol(noteStoreTrans);
-                    mNoteStore = new NoteStore.Client(noteStoreProt, noteStoreProt);
+                    mNoteStore = mSession.createNoteStore();
                     cacheManager.writeNoteCache(mNoteStore.listNotebooks(mAuthToken));
                     cacheManager.writeTagsCache(mNoteStore.listTags(mAuthToken));
                     mToastMessage = null;
@@ -206,45 +171,6 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
                     publishProgress(getString(R.string.getting_data) + "(" +getString(R.string.retry) + ": " + i + ")");
                 }
             }
-        }
-
-        private boolean doAuth(String username, String password) {
-            publishProgress(getString(R.string.authentication));
-            for (int i = 0 ; i < 5 ; i++) {
-                try {
-                    AuthenticationResult authResult;
-                    TAndroidHttpClient userStoreTrans =
-                        new TAndroidHttpClient(ClippingService.USERSTORE_URL,
-                                ClippingService.USER_AGENT, getFilesDir());
-                    TBinaryProtocol userStoreProt = new TBinaryProtocol(userStoreTrans);
-                    mUserStore = new UserStore.Client(userStoreProt, userStoreProt);
-
-                    boolean versionOk = mUserStore.checkVersion("twiccaEvernotePlugin (EDAM Android)",
-                            com.evernote.edam.userstore.Constants.EDAM_VERSION_MAJOR,
-                            com.evernote.edam.userstore.Constants.EDAM_VERSION_MINOR);
-                    if (!versionOk) {
-                       mToastMessage = getString(R.string.message_error_version);
-                        return false;
-                    } // if versionOK
-
-                    try {
-                        authResult = mUserStore.authenticate(username, password,
-                                ClippingService.CONSUMER_KEY, ClippingService.CONSUMER_SECRET);
-                    } catch (EDAMUserException ex) {
-                        mToastMessage= getString(R.string.message_error_auth);
-                        return false;
-                    } // try
-                    mUser = authResult.getUser();
-                    mAuthToken = authResult.getAuthenticationToken();
-                    cacheManager.writeAuthCache(authResult.getAuthenticationToken(), authResult.getExpiration());
-                    return true;
-                } catch (Exception e) {
-                    mToastMessage = "Error: " + e.getMessage();
-                    Log.e(LOG_TAG, e.getMessage());
-                    publishProgress(getString(R.string.authentication) + "(" +getString(R.string.retry) + ": " + i + ")");
-                } // try
-            }
-            return false;
         }
     }
 }

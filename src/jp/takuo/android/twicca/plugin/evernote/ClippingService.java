@@ -19,10 +19,10 @@ package jp.takuo.android.twicca.plugin.evernote;
 import java.util.Hashtable;
 import java.util.List;
 
-import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TTransportException;
 
-import com.evernote.android.edam.TAndroidHttpClient;
+import com.evernote.client.conn.ApplicationInfo;
+import com.evernote.client.oauth.android.EvernoteSession;
 import com.evernote.edam.error.EDAMNotFoundException;
 import com.evernote.edam.error.EDAMUserException;
 import com.evernote.edam.notestore.NoteStore;
@@ -30,14 +30,12 @@ import com.evernote.edam.type.Note;
 import com.evernote.edam.type.NoteAttributes;
 import com.evernote.edam.type.Notebook;
 import com.evernote.edam.type.Tag;
-import com.evernote.edam.type.User;
-import com.evernote.edam.userstore.AuthenticationResult;
-import com.evernote.edam.userstore.Constants;
-import com.evernote.edam.userstore.UserStore;
 
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
@@ -48,28 +46,22 @@ public class ClippingService extends IntentService {
     private static final String LOG_TAG = "ClippingService";
     public static final String CONSUMER_KEY = "sample";
     public static final String CONSUMER_SECRET = "abcdef0123456789";
-    public static final String USER_AGENT = "TwiccaEvernotePlugin (Android EDAM)/" +
-        Constants.EDAM_VERSION_MAJOR + "." + 
-        Constants.EDAM_VERSION_MINOR;
     private String mToastMessage = null;
 
     // Change this value to "www.evernote.com" to use the Evernote production
     // server instead of the sandbox server.
+    public static final String APP_NAME = "Twicca Evernote plugin";
+    public static final String APP_VERSION = "1.8.0";
     public static final String EVERNOTE_HOST = "sandbox.evernote.com";
     public static final String USERSTORE_URL = "https://" + EVERNOTE_HOST + "/edam/user";
     public static final String NOTESTORE_URL_BASE = "https://" + EVERNOTE_HOST + "/edam/note/";
 
     private Hashtable<String, String> mNoteTable;
+    private EvernoteSession mSession;
     private String mAuthToken;
     // Client classes used to interact with the Evernote web service
-    private User mUser;
-    private UserStore.Client mUserStore;
     private NoteStore.Client mNoteStore;
     private List<Notebook> mNotebooks;
-
-    // preference values
-    private String mEvernoteUsername;
-    private String mEvernotePassword;
 
     /* from Intent */
     private String mNotebookName;
@@ -89,55 +81,8 @@ public class ClippingService extends IntentService {
         mHandler = new Handler();
     }
 
-    private boolean doAuth() {
-        for (int i = 0 ; i < 5 ; i++) {
-            try {
-                AuthenticationResult authResult;
-                TAndroidHttpClient userStoreTrans =
-                    new TAndroidHttpClient(USERSTORE_URL, USER_AGENT, getFilesDir());
-                TBinaryProtocol userStoreProt = new TBinaryProtocol(userStoreTrans);
-                setUserStore(new UserStore.Client(userStoreProt, userStoreProt));
-
-                Log.d(LOG_TAG, "Check protocol version...");
-
-                boolean versionOk = mUserStore.checkVersion("twiccaEvernotePlugin (EDAM Android)",
-                        com.evernote.edam.userstore.Constants.EDAM_VERSION_MAJOR,
-                        com.evernote.edam.userstore.Constants.EDAM_VERSION_MINOR);
-                if (!versionOk) {
-                    mToastMessage = getString(R.string.message_error_version);
-                    Log.e(LOG_TAG, mToastMessage);
-                    return false;
-                } // if versionOK
-
-                Log.d(LOG_TAG, "Authenticate user...");
-
-                try {
-                    authResult = getUserStore().authenticate(mEvernoteUsername, mEvernotePassword, CONSUMER_KEY, CONSUMER_SECRET);
-                } catch (EDAMUserException ex) {
-                    mToastMessage = getString(R.string.message_error_auth);
-                    Log.e(LOG_TAG, mToastMessage, ex);
-                    return false;
-                } // try
-                mUser = authResult.getUser();
-                setAuthToken(authResult.getAuthenticationToken());
-                cacheManager.writeAuthCache(authResult.getAuthenticationToken(), authResult.getExpiration());
-                return true;
-            } catch (Exception e) {
-                mToastMessage = "Error: " + e.getMessage();
-                Log.e(LOG_TAG, mToastMessage);
-            } // try
-        }
-        return false;
-    }
-
     private boolean refreshAuth() {
-        AuthenticationResult authResult;
-        if (getUserStore() == null) return false;
-        Log.d(LOG_TAG, "Refresh authtoken...");
         try {
-            authResult = getUserStore().refreshAuthentication(getAuthToken());
-            setAuthToken(authResult.getAuthenticationToken());
-            cacheManager.writeAuthCache(authResult.getAuthenticationToken(), authResult.getExpiration());
             List<Tag> tags = getNoteStore().listTags(getAuthToken());
             cacheManager.writeTagsCache(tags);
             if (mNotebooks == null) {
@@ -153,6 +98,23 @@ public class ClippingService extends IntentService {
         } // try
     }
 
+    private void setupSession() {
+        PackageInfo pInfo;
+        String version;
+        try {
+            pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+            version = pInfo.versionName;
+        } catch (NameNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            version = "1.7.0";
+        }
+        ApplicationInfo info =
+                new ApplicationInfo(ClippingService.CONSUMER_KEY,
+                        ClippingService.CONSUMER_SECRET, ClippingService.EVERNOTE_HOST, getString(R.string.app_name), version);
+        mSession = new EvernoteSession(info, getSharedPreferences("TwiccaPluginSettings", MODE_PRIVATE), getExternalFilesDir(null));
+    }
+    
     @Override
     protected void onHandleIntent(Intent intent) {
         mContext = getApplicationContext();
@@ -162,23 +124,12 @@ public class ClippingService extends IntentService {
         mTags             = intent.getStringExtra("tags");
         mNoteTitle        = intent.getStringExtra("title");
         mBodyText         = intent.getStringExtra(Intent.EXTRA_TEXT);
-        mEvernoteUsername = intent.getStringExtra("username");
-        mEvernotePassword = intent.getStringExtra("password");
         mTweetURL         = intent.getStringExtra("url");
-        String token = null;
 
-        token = cacheManager.getAuthToken();
-        if (token != null) {
-            setAuthToken(token);
-        } else {
-            if (doAuth() == false) {
-                mToastMessage = getString(R.string.message_error_auth);
-            }
-        }
+        setupSession();
+        mAuthToken = mSession.getAuthToken();
 
-        if (getAuthToken() != null) {
-            doEvernoteApi();
-        }
+        doEvernoteApi();
 
         mHandler.post(new Runnable() {
             @Override
@@ -194,19 +145,7 @@ public class ClippingService extends IntentService {
     private void doEvernoteApi() {
         for (int i=0; i<5;i++) {
             try {
-                TAndroidHttpClient userStoreTrans =
-                    new TAndroidHttpClient(USERSTORE_URL, USER_AGENT, getFilesDir());
-                TBinaryProtocol userStoreProt = new TBinaryProtocol(userStoreTrans);
-                setUserStore(new UserStore.Client(userStoreProt, userStoreProt));
-                if (mUser == null) {
-                    mUser = getUserStore().getUser(getAuthToken());
-                }
-                Log.d(LOG_TAG, "Getting the NoteStore...");
-                String noteStoreUrl = NOTESTORE_URL_BASE + mUser.getShardId();
-                TAndroidHttpClient noteStoreTrans =
-                    new TAndroidHttpClient(noteStoreUrl, USER_AGENT, getFilesDir());
-                TBinaryProtocol noteStoreProt = new TBinaryProtocol(noteStoreTrans);
-                setNoteStore(new NoteStore.Client(noteStoreProt, noteStoreProt));
+                mNoteStore = mSession.createNoteStore();
                 doUpload();
                 return; // escape from loop()
             } catch (TTransportException e) {
@@ -304,27 +243,11 @@ public class ClippingService extends IntentService {
         } // while
     }
 
-    private UserStore.Client getUserStore() {
-        return this.mUserStore;
-    }
-
     private NoteStore.Client getNoteStore() {
         return this.mNoteStore;
     }
 
-    private void setNoteStore(NoteStore.Client noteStore) {
-        this.mNoteStore = noteStore;
-    }
-
-    private void setUserStore(UserStore.Client userStore) {
-        this.mUserStore = userStore;
-    }
-
     private String getAuthToken() {
         return this.mAuthToken;
-    }
-
-    private void setAuthToken(String authToken) {
-        this.mAuthToken = authToken;
     }
 }

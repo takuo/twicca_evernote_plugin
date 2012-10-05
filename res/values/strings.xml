@@ -12,8 +12,8 @@
     <string name="cancel">Cancel</string>
     <string name="app_name">twicca Evernote plugin</string>
     <string name="pref_evernote_settings_title">Evernote settings</string>
-    <string name="pref_evernote_username">Username</string>
-    <string name="pref_evernote_password">Password</string>
+    <string name="pref_authentication">Authenticate</string>
+    <string name="summary_authentication">Authenticate via OAuth</string>
     <string name="pref_evernote_notebook">Notebook</string>
     <string name="pref_evernote_tags">Tags</string>
     <string name="pref_confirm_dialog">Show confirm dialog</string>
@@ -41,4 +41,5 @@
     <string name="getting_data">Getting notebooks and tags...</string>
     <string name="retry">retry</string>
     <string name="hint_empty">default notebook</string>
+    
 </resources>
