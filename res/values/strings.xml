@@ -14,6 +14,8 @@
     <string name="pref_evernote_settings_title">Evernote settings</string>
     <string name="pref_authentication">Authenticate</string>
     <string name="summary_authentication">Authenticate via OAuth</string>
+    <string name="pref_auth_authed">Authenticated</string>
+    <string name="summary_auth_authed">tap to logout</string>
     <string name="pref_evernote_notebook">Notebook</string>
     <string name="pref_evernote_tags">Tags</string>
     <string name="pref_confirm_dialog">Show confirm dialog</string>
