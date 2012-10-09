@@ -24,6 +24,9 @@ import java.util.ListIterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.evernote.client.conn.ApplicationInfo;
+import com.evernote.client.oauth.android.EvernoteSession;
+
 /* Android */
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -115,6 +118,9 @@ public class TwiccaEvernoteUploader extends Activity {
 
     // Caching
     private ECacheManager cacheManager;
+    
+    // Session
+    private EvernoteSession mSession;
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -135,7 +141,39 @@ public class TwiccaEvernoteUploader extends Activity {
         mProfileImageUrl = intent.getStringExtra("user_profile_image_url_normal");
         mCreatedAt = intent.getStringExtra("created_at");
         mSource = intent.getStringExtra("source");
-        run();
+        setupSession();
+        if (!mSession.isLoggedIn()) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("OAuth authentication is required!");
+            builder.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    Intent intent = new Intent();
+                    intent.setClass(mContext, TwiccaPluginSettings.class);
+                    startActivity(intent);
+                    finish();
+                }
+            }
+            );
+            builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    TwiccaEvernoteUploader.this.finish();
+                }
+            }
+            );
+            builder.create().show();
+        } else {
+            run();
+        }
+    }
+
+    private void setupSession() {
+        ApplicationInfo info =
+                new ApplicationInfo(ClippingService.CONSUMER_KEY,
+                        ClippingService.CONSUMER_SECRET, ClippingService.EVERNOTE_HOST,
+                        ClippingService.APP_NAME,ClippingService.APP_VERSION);
+        mSession = new EvernoteSession(info, getSharedPreferences(TwiccaPluginSettings.SHARED_PREF, MODE_PRIVATE), getFilesDir());
     }
 
     private void requestUpload ()

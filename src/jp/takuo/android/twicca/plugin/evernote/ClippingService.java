@@ -44,8 +44,8 @@ public class ClippingService extends IntentService {
     private Context mContext;
 
     private static final String LOG_TAG = "ClippingService";
-    public static final String CONSUMER_KEY = "sample";
-    public static final String CONSUMER_SECRET = "abcdef0123456789";
+    public static final String CONSUMER_KEY = "northeye-7638";
+    public static final String CONSUMER_SECRET = "";
     private String mToastMessage = null;
 
     // Change this value to "www.evernote.com" to use the Evernote production
@@ -99,20 +99,11 @@ public class ClippingService extends IntentService {
     }
 
     private void setupSession() {
-        PackageInfo pInfo;
-        String version;
-        try {
-            pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-            version = pInfo.versionName;
-        } catch (NameNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            version = "1.7.0";
-        }
         ApplicationInfo info =
                 new ApplicationInfo(ClippingService.CONSUMER_KEY,
-                        ClippingService.CONSUMER_SECRET, ClippingService.EVERNOTE_HOST, getString(R.string.app_name), version);
-        mSession = new EvernoteSession(info, getSharedPreferences("TwiccaPluginSettings", MODE_PRIVATE), getExternalFilesDir(null));
+                        ClippingService.CONSUMER_SECRET, ClippingService.EVERNOTE_HOST,
+                        ClippingService.APP_NAME,ClippingService.APP_VERSION);
+        mSession = new EvernoteSession(info, getSharedPreferences(TwiccaPluginSettings.SHARED_PREF, MODE_PRIVATE), getFilesDir());
     }
     
     @Override
@@ -127,6 +118,7 @@ public class ClippingService extends IntentService {
         mTweetURL         = intent.getStringExtra("url");
 
         setupSession();
+
         mAuthToken = mSession.getAuthToken();
 
         doEvernoteApi();

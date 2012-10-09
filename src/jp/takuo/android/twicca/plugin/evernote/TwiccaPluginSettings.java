@@ -32,6 +32,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 public class TwiccaPluginSettings extends PreferenceActivity implements OnPreferenceChangeListener {
+    public static final String SHARED_PREF = TwiccaPluginSettings.class.toString();
     /** Called when the activity is first created. */
     private static final String LOG_TAG = TwiccaPluginSettings.class.toString();
     private ECacheManager cacheManager;
@@ -41,6 +42,7 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         cacheManager = new ECacheManager(getApplicationContext());
         Preference pref;
         MultiAutoCompleteEditTextPreference meditPref;
@@ -62,9 +64,13 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
         pref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
            @Override
            public boolean onPreferenceClick(Preference preference) {
-               if (!mSession.isLoggedIn())
-                   mSession.authenticate(getApplicationContext());
-            return false;
+               if (!mSession.isLoggedIn()) {
+                   mSession.authenticate(TwiccaPluginSettings.this);
+               } else {
+                   mSession.logOut(getSharedPreferences(SHARED_PREF, MODE_PRIVATE));
+               }
+               updateui();
+               return true;
            }
         });
         Preference preference = findPreference("pref_update_cache");
@@ -72,30 +78,47 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
             @Override
             public boolean onPreferenceClick(Preference preference) {
                 UpdateCacheTask task = new UpdateCacheTask();
-                if (!mSession.isLoggedIn())
-                    mSession.authenticate(getApplicationContext());
                 task.execute();
-                return false;
+                return true;
             }
         });
     }
 
+    private void updateui() {
+        Preference pref = findPreference("pref_do_auth");
+        if (mSession.isLoggedIn()) {
+            pref.setTitle(R.string.pref_auth_authed);
+            pref.setSummary(R.string.summary_auth_authed);
+            pref = findPreference("pref_update_cache");
+            pref.setEnabled(true);
+        } else {
+            pref.setTitle(R.string.pref_authentication);
+            pref.setSummary(R.string.summary_authentication);
+            pref = findPreference("pref_update_cache");
+            pref.setEnabled(false);
+        }
+    }
+    
     private void setupSession() {
         ApplicationInfo info =
                 new ApplicationInfo(ClippingService.CONSUMER_KEY,
                         ClippingService.CONSUMER_SECRET, ClippingService.EVERNOTE_HOST,
                         ClippingService.APP_NAME, ClippingService.APP_VERSION);
-        mSession = new EvernoteSession(info, getSharedPreferences("TwiccaPluginSettings", MODE_PRIVATE), getFilesDir());
+        mSession = new EvernoteSession(info,
+                getSharedPreferences(SHARED_PREF, MODE_PRIVATE),
+                getFilesDir());
+        updateui();
     }
 
     @Override
     public void onResume() {
       super.onResume();
       // Complete the Evernote authentication process if necessary
-      if (!mSession.completeAuthentication(getSharedPreferences("TwiccaPluginSettings", MODE_PRIVATE))) {
+      if (!mSession.completeAuthentication(getSharedPreferences(SHARED_PREF, MODE_PRIVATE))) {
         // We only want to do this when we're resuming after authentication...
         Toast.makeText(this, "Evernote login failed", Toast.LENGTH_LONG).show();
       }
+      updateui();
     }
 
     @Override
