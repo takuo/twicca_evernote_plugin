@@ -16,6 +16,7 @@
         <activity android:name=".TwiccaPluginSettings"
          android:label="@string/settings_name">
             <intent-filter>
+                 <action android:name="android.intent.action.MAIN" />
                  <action android:name="jp.r246.twicca.ACTION_PLUGIN_SETTINGS" />
                  <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
@@ -26,7 +27,7 @@
           android:launchMode="singleTask"
           android:configChanges="orientation|keyboard">
           <intent-filter>
-            <data android:scheme="en-northeye" />
+            <data android:scheme="en-northeye-7638" />
             <action android:name="android.intent.action.VIEW" />                
             <category android:name="android.intent.category.BROWSABLE"/>
             <category android:name="android.intent.category.DEFAULT" /> 
