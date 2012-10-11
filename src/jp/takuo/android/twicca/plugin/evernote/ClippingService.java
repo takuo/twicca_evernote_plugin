@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Takuo Kitame.
+ * Copyright 2012 Takuo Kitame.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public class ClippingService extends IntentService {
     // Change this value to "www.evernote.com" to use the Evernote production
     // server instead of the sandbox server.
     public static final String APP_NAME = "Twicca Evernote plugin";
-    public static final String APP_VERSION = "1.8.0";
+    public static final String APP_VERSION = "1.7.0";
     public static final String EVERNOTE_HOST = "sandbox.evernote.com";
     public static final String USERSTORE_URL = "https://" + EVERNOTE_HOST + "/edam/user";
     public static final String NOTESTORE_URL_BASE = "https://" + EVERNOTE_HOST + "/edam/note/";

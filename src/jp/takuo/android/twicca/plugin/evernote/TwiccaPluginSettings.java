@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Takuo Kitame.
+ * Copyright 2012 Takuo Kitame.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,14 @@
 package jp.takuo.android.twicca.plugin.evernote;
 
 
+
 import com.evernote.edam.notestore.NoteStore;
 
 import com.evernote.client.conn.ApplicationInfo;
 import com.evernote.client.oauth.android.EvernoteSession;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.Preference;
@@ -38,12 +40,14 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
     private ECacheManager cacheManager;
     private String mToastMessage;
     private EvernoteSession mSession;
+    private Context mContext;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mContext = getApplicationContext();
 
-        cacheManager = new ECacheManager(getApplicationContext());
+        cacheManager = new ECacheManager(mContext);
         Preference pref;
         MultiAutoCompleteEditTextPreference meditPref;
         NotebookPreference notebookPref;
@@ -65,7 +69,7 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
            @Override
            public boolean onPreferenceClick(Preference preference) {
                if (!mSession.isLoggedIn()) {
-                   mSession.authenticate(TwiccaPluginSettings.this);
+                   mSession.authenticate(mContext);
                } else {
                    mSession.logOut(getSharedPreferences(SHARED_PREF, MODE_PRIVATE));
                }
@@ -98,7 +102,7 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
             pref.setEnabled(false);
         }
     }
-    
+
     private void setupSession() {
         ApplicationInfo info =
                 new ApplicationInfo(ClippingService.CONSUMER_KEY,
@@ -108,6 +112,13 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
                 getSharedPreferences(SHARED_PREF, MODE_PRIVATE),
                 getFilesDir());
         updateui();
+
+        // remove deprecated preferences
+        getSharedPreferences(SHARED_PREF, MODE_PRIVATE).edit()
+        .remove("pref_evernote_username")
+        .remove("pref_evernote_password")
+        .remove("pref_evernote_crypted")
+        .commit();
     }
 
     @Override
