@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="activity_name">Evernote にクリップ</string>
-    <string name="settings_name">Evernote プラグイン</string>
+    <string name="settings_name">twicca Evernote プラグイン</string>
     <string name="dialog_title">クリップ</string>
     <string name="dialog_message">Evernote にクリップ中...</string>
     <string name="dialog_label">ノートブックとタグの選択</string>

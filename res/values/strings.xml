@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="activity_name">Clip to Evernote</string>
-    <string name="settings_name">Evernote Plugin</string>
+    <string name="settings_name">twicca Evernote Plugin</string>
     <string name="dialog_title">Clipping</string>
     <string name="dialog_message">Clipping to Evernote...</string>
     <string name="dialog_label">Select Notebook and Tags.</string>

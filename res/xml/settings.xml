@@ -10,7 +10,7 @@
         <Preference android:summary="@string/summary_authentication"
                     android:title="@string/pref_authentication"
                     android:key="pref_do_auth"
-                    android:persistent="false"/>
+                    android:persistent="false" />
         <jp.takuo.android.twicca.plugin.evernote.NotebookPreference
           android:key="pref_evernote_notebook"
           android:title="@string/pref_evernote_notebook" />
