@@ -28,6 +28,8 @@
     <string name="account_warning">Please setup Evernote account</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="title_oauth_required">OAuth required</string>
+    <string name="message_oauth_required">OAuth authentication can be done in Settings screen, do it now?</string>
     <string name="message_setup_api">Setting up Evernote API...</string>
     <string name="message_clipped">Clipped.</string>
     <string name="message_error_auth">Error: Failed to authenticate.</string>

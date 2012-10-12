@@ -28,6 +28,8 @@
     <string name="account_warning">Evernote のアカウントを設定してください</string>
     <string name="yes">はい</string>
     <string name="no">やめる</string>
+    <string name="title_oauth_required">OAuth 認証が必要</string>
+    <string name="message_oauth_required">OAuth認証は設定画面で行うことができます。今すぐ行いますか?</string>
     <string name="message_setup_api">Evernote APIの準備中...</string>
     <string name="message_clipped">クリップしました</string>
     <string name="message_error_auth">エラー: 認証に失敗しました</string>
