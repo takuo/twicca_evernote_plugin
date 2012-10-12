@@ -144,7 +144,8 @@ public class TwiccaEvernoteUploader extends Activity {
         setupSession();
         if (!mSession.isLoggedIn()) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("OAuth authentication is required!");
+            builder.setTitle(getString(R.string.title_oauth_required));
+            builder.setMessage(getString(R.string.message_oauth_required));
             builder.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
