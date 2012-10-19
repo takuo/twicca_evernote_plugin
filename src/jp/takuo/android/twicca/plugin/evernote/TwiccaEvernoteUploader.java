@@ -193,7 +193,7 @@ public class TwiccaEvernoteUploader extends Activity {
             "<td style='padding: 10px'>" +
             "<b>" + mUsername + "(<a href=\"http://twitter.com/" + mScreenName + "\">" + "@" + mScreenName + "</a>)</b>" +
             "<p>" + mBodyText + "</p>" +
-            "<a style='color: #888888' href=\"http://twitter.com/"+ mScreenName + "/statuses/"+ mTweetId + "\">" + time.format("%m/%d %H:%M:%S") + "</a>" +
+            "<a style='color: #888888' href=\"http://twitter.com/"+ mScreenName + "/status/"+ mTweetId + "\">" + time.format("%m/%d %H:%M:%S") + "</a>" +
             " <span style='color: #888888'>from " + mSource + "</span>" +
             "</td></tr>" +
             "</table>" +
