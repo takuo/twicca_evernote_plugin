@@ -30,7 +30,7 @@
     <string name="no">No</string>
     <string name="title_oauth_required">OAuth required</string>
     <string name="message_oauth_required">OAuth authentication can be done in Settings screen, do it now?</string>
-    <string name="message_setup_api">Setting up Evernote API...</string>
+    <string name="message_setup_api">Setting up Evernote API&#8230;</string>
     <string name="message_clipped">Clipped.</string>
     <string name="message_error_auth">Error: Failed to authenticate.</string>
     <string name="message_error_unknown">Error: Something is wrong, maybe a Bug</string>
@@ -41,9 +41,10 @@
     <string name="new_or_default">[Enter or default]</string>
     <string name="hint_notebook">Enter a notebook name</string>
     <string name="update_cache">Update cache</string>
-    <string name="authentication">Authentication...</string>
-    <string name="getting_data">Getting notebooks and tags...</string>
+    <string name="authentication">Authentication&#8230;</string>
+    <string name="getting_data">Getting notebooks and tags&#8230;</string>
     <string name="retry">retry</string>
     <string name="hint_empty">default notebook</string>
-    
+    <string name="auth_expired">OAuth expired</string>
+    <string name="message_auth_expired">OAuth token has been expired, please authorize again.</string>
 </resources>

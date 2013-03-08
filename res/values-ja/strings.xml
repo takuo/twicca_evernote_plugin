@@ -3,7 +3,7 @@
     <string name="activity_name">Evernote にクリップ</string>
     <string name="settings_name">twicca Evernote プラグイン</string>
     <string name="dialog_title">クリップ</string>
-    <string name="dialog_message">Evernote にクリップ中...</string>
+    <string name="dialog_message">Evernote にクリップ中&#8230;</string>
     <string name="dialog_label">ノートブックとタグの選択</string>
     <string name="confirm_clip">クリップの確認</string>
     <string name="app_name">twicca Evernote プラグイン</string>
@@ -30,7 +30,7 @@
     <string name="no">やめる</string>
     <string name="title_oauth_required">OAuth 認証が必要</string>
     <string name="message_oauth_required">OAuth認証は設定画面で行うことができます。今すぐ行いますか?</string>
-    <string name="message_setup_api">Evernote APIの準備中...</string>
+    <string name="message_setup_api">Evernote APIの準備中&#8230;</string>
     <string name="message_clipped">クリップしました</string>
     <string name="message_error_auth">エラー: 認証に失敗しました</string>
     <string name="message_error_unknown">エラー: なにかがおかしいです, たぶんバグです</string>
@@ -41,8 +41,10 @@
     <string name="new_or_default">[入力する・デフォルト]</string>
     <string name="hint_notebook">ノートブック名を入力</string>
     <string name="update_cache">キャッシュを更新</string>
-    <string name="authentication">認証中...</string>
-    <string name="getting_data">ノートブックとタグを取得中...</string>
+    <string name="authentication">認証中&#8230;</string>
+    <string name="getting_data">ノートブックとタグを取得中&#8230;</string>
     <string name="retry">リトライ</string>
     <string name="hint_empty">デフォルトノートブック</string>
+    <string name="auth_expired">OAuth有効期限切れ</string>
+    <string name="message_auth_expired">OAuthトークンの有効期限が切れました。再認証してください。</string>
 </resources>
