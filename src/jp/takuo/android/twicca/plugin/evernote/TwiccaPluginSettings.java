@@ -18,13 +18,18 @@ package jp.takuo.android.twicca.plugin.evernote;
 
 
 
+import com.evernote.edam.error.EDAMErrorCode;
+import com.evernote.edam.error.EDAMUserException;
 import com.evernote.edam.notestore.NoteStore;
 
 import com.evernote.client.conn.ApplicationInfo;
 import com.evernote.client.oauth.android.EvernoteSession;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.Preference;
@@ -46,6 +51,8 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = getApplicationContext();
+        Intent intent = getIntent();
+        boolean reset_auth = intent.getBooleanExtra("reset_auth", false);
 
         cacheManager = new ECacheManager(mContext);
         Preference pref;
@@ -62,7 +69,7 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
         meditPref.setOnPreferenceChangeListener(this);
         meditPref.setStringArray(cacheManager.getTagNames());
 
-        setupSession();
+        setupSession(reset_auth);
 
         pref = findPreference("pref_do_auth");
         pref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
@@ -81,8 +88,7 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
         preference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
-                UpdateCacheTask task = new UpdateCacheTask();
-                task.execute();
+                new UpdateCacheTask().execute();
                 return true;
             }
         });
@@ -103,14 +109,30 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
         }
     }
 
-    private void setupSession() {
+    private void setupSession(boolean reset) {
         ApplicationInfo info =
                 new ApplicationInfo(ClippingService.CONSUMER_KEY,
                         ClippingService.CONSUMER_SECRET, ClippingService.EVERNOTE_HOST,
                         ClippingService.APP_NAME, ClippingService.APP_VERSION);
-        mSession = new EvernoteSession(info,
-                getSharedPreferences(SHARED_PREF, MODE_PRIVATE),
-                getFilesDir());
+        if (reset) {
+            mSession = new EvernoteSession(info,
+                    getFilesDir());
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle(getString(R.string.auth_expired));
+            builder.setMessage(getString(R.string.message_auth_expired));
+            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                   dialog.dismiss();
+                }
+            });
+            builder.create().show();
+        } else {
+            mSession = new EvernoteSession(info,
+                    getSharedPreferences(SHARED_PREF, MODE_PRIVATE),
+                    getFilesDir());
+        }
+
         updateui();
 
         // remove deprecated preferences
@@ -140,7 +162,7 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
         return true;
     }
 
-    public class UpdateCacheTask extends AsyncTask<String, String, Void> {
+    public class UpdateCacheTask extends AsyncTask<String, String, Boolean> {
         private ProgressDialog mProgressDialog;
 
         private NoteStore.Client mNoteStore;
@@ -161,7 +183,7 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
         }
 
         @Override
-        protected void onPostExecute (Void result) {
+        protected void onPostExecute (Boolean result) {
             super.onPostExecute(result);
             try {
                 if(mProgressDialog != null &&
@@ -174,8 +196,12 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
             if (mToastMessage != null) {
                 Toast.makeText(getApplicationContext(), mToastMessage, Toast.LENGTH_LONG).show();
             }
-            ((NotebookPreference)findPreference(TwiccaEvernoteUploader.PREF_EVERNOTE_NOTEBOOK)).setNotebookList(cacheManager.getNotebookNames());
-            ((MultiAutoCompleteEditTextPreference)findPreference(TwiccaEvernoteUploader.PREF_EVERNOTE_TAGS)).setStringArray(cacheManager.getTagNames());
+            if (!result) {
+                setupSession(true);
+            } else {
+                ((NotebookPreference)findPreference(TwiccaEvernoteUploader.PREF_EVERNOTE_NOTEBOOK)).setNotebookList(cacheManager.getNotebookNames());
+                ((MultiAutoCompleteEditTextPreference)findPreference(TwiccaEvernoteUploader.PREF_EVERNOTE_TAGS)).setStringArray(cacheManager.getTagNames());
+            }
         }
 
         @Override
@@ -184,13 +210,12 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
         }
 
         @Override
-        protected Void doInBackground(String... params) {
+        protected Boolean doInBackground(String... params) {
             mAuthToken = mSession.getAuthToken();
-            doNoteStore();
-            return null;
+            return doNoteStore();
         }
 
-        private void doNoteStore() {
+        private Boolean doNoteStore() {
             publishProgress(getString(R.string.getting_data));
             for (int i=0; i<5;i++) {
                 try {
@@ -198,13 +223,20 @@ public class TwiccaPluginSettings extends PreferenceActivity implements OnPrefer
                     cacheManager.writeNoteCache(mNoteStore.listNotebooks(mAuthToken));
                     cacheManager.writeTagsCache(mNoteStore.listTags(mAuthToken));
                     mToastMessage = null;
-                    return;
+                    return true;
+                } catch (EDAMUserException eue) {
+                    if (eue.isSetErrorCode() && eue.getErrorCode() == EDAMErrorCode.AUTH_EXPIRED) {
+                        publishProgress(getString(R.string.auth_expired));
+                    }
+                    return false;
                 } catch (Exception e) {
                     mToastMessage = "Error: " + e.getMessage();
                     Log.e(LOG_TAG, e.getMessage());
                     publishProgress(getString(R.string.getting_data) + "(" +getString(R.string.retry) + ": " + i + ")");
+                    return true;
                 }
             }
+            return true;
         }
     }
 }

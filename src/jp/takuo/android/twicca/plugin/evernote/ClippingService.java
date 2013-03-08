@@ -23,6 +23,7 @@ import org.apache.thrift.transport.TTransportException;
 
 import com.evernote.client.conn.ApplicationInfo;
 import com.evernote.client.oauth.android.EvernoteSession;
+import com.evernote.edam.error.EDAMErrorCode;
 import com.evernote.edam.error.EDAMNotFoundException;
 import com.evernote.edam.error.EDAMUserException;
 import com.evernote.edam.notestore.NoteStore;
@@ -31,6 +32,7 @@ import com.evernote.edam.type.NoteAttributes;
 import com.evernote.edam.type.Notebook;
 import com.evernote.edam.type.Tag;
 
+import android.app.AlertDialog;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
@@ -49,7 +51,7 @@ public class ClippingService extends IntentService {
     // Change this value to "www.evernote.com" to use the Evernote production
     // server instead of the sandbox server.
     public static final String APP_NAME = "Twicca Evernote plugin";
-    public static final String APP_VERSION = "1.7.0";
+    public static final String APP_VERSION = "1.7.4";
     public static final String EVERNOTE_HOST = "sandbox.evernote.com";
     public static final String USERSTORE_URL = "https://" + EVERNOTE_HOST + "/edam/user";
     public static final String NOTESTORE_URL_BASE = "https://" + EVERNOTE_HOST + "/edam/note/";
@@ -124,7 +126,9 @@ public class ClippingService extends IntentService {
         mHandler.post(new Runnable() {
             @Override
             public void run () {
-                Toast.makeText(mContext, mToastMessage, Toast.LENGTH_LONG).show();
+                if (mToastMessage != null) {
+                    Toast.makeText(mContext, mToastMessage, Toast.LENGTH_LONG).show();
+                }
             }
         });
         if (getAuthToken() != null) {
@@ -223,6 +227,18 @@ public class ClippingService extends IntentService {
                 mToastMessage = getString(R.string.message_clipped) + ": " + mNoteTitle;
                 Log.d(LOG_TAG, "done clipping");
                 return;
+            } catch (EDAMUserException eue) {
+                mToastMessage = null;
+                if (eue.isSetErrorCode() && eue.getErrorCode() == EDAMErrorCode.AUTH_EXPIRED) {
+                    // Token EXPIRED
+                    Intent intent = new Intent(this, TwiccaPluginSettings.class);
+                    intent.putExtra("reset_auth", true);
+                    intent.setAction(Intent.ACTION_MAIN);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                } else {
+                    // failed to auth,
+                }
             } catch (TTransportException e) {
                 mToastMessage = getString(R.string.message_error_server) + "\n" + e.getMessage();
                 Log.e(LOG_TAG, mToastMessage, e);
